@@ -6,27 +6,21 @@ from typing import Any
 
 
 KeyData = dict[str, Any]
+MarkerData = dict[str, Any]
 
 
 class KeyboardLayout:
     """
     Load and query a paper keyboard layout.
 
-    A key is represented by:
-    {
-        "id": "A",
-        "label": "A",
-        "x": 50,
-        "y": 105,
-        "w": 24,
-        "h": 24
-    }
-
-    x, y are the top-left corner of the key in paper coordinates.
-    w, h are the width and height of the key.
+    The layout JSON is the source of truth for:
+    - board size
+    - key positions
+    - ArUco marker positions
     """
 
     REQUIRED_KEY_FIELDS = {"id", "label", "x", "y", "w", "h"}
+    REQUIRED_MARKER_FIELDS = {"id", "x", "y", "size_mm"}
 
     def __init__(
         self,
@@ -34,11 +28,19 @@ class KeyboardLayout:
         board_height_mm: float,
         keys: list[KeyData],
         layout_id: str = "keyboard_layout",
+        title: str | None = None,
+        dpi: int = 300,
+        marker_dictionary: str = "DICT_4X4_50",
+        markers: list[MarkerData] | None = None,
     ):
         self.layout_id = layout_id
-        self.board_width_mm = board_width_mm
-        self.board_height_mm = board_height_mm
+        self.title = title or layout_id
+        self.board_width_mm = float(board_width_mm)
+        self.board_height_mm = float(board_height_mm)
+        self.dpi = int(dpi)
+        self.marker_dictionary = marker_dictionary
         self.keys = keys
+        self.markers = markers or []
 
         self._validate()
 
@@ -51,8 +53,12 @@ class KeyboardLayout:
 
         return cls(
             layout_id=data.get("layout_id", path.stem),
+            title=data.get("title"),
             board_width_mm=data["board_width_mm"],
             board_height_mm=data["board_height_mm"],
+            dpi=data.get("dpi", 300),
+            marker_dictionary=data.get("marker_dictionary", "DICT_4X4_50"),
+            markers=data.get("markers", []),
             keys=data["keys"],
         )
 
@@ -68,13 +74,28 @@ class KeyboardLayout:
 
         for index, key in enumerate(self.keys):
             missing_fields = self.REQUIRED_KEY_FIELDS - set(key.keys())
+
             if missing_fields:
                 raise ValueError(
                     f"Key at index {index} is missing fields: {missing_fields}"
                 )
 
-            if key["w"] <= 0 or key["h"] <= 0:
+            if float(key["w"]) <= 0 or float(key["h"]) <= 0:
                 raise ValueError(f"Key {key['id']} must have positive width and height.")
+
+        if not isinstance(self.markers, list):
+            raise TypeError("markers must be a list.")
+
+        for index, marker in enumerate(self.markers):
+            missing_fields = self.REQUIRED_MARKER_FIELDS - set(marker.keys())
+
+            if missing_fields:
+                raise ValueError(
+                    f"Marker at index {index} is missing fields: {missing_fields}"
+                )
+
+            if float(marker["size_mm"]) <= 0:
+                raise ValueError(f"Marker {marker['id']} must have positive size.")
 
     def is_inside_key(
         self,
@@ -83,16 +104,10 @@ class KeyboardLayout:
         key: KeyData,
         margin: float = 0.0,
     ) -> bool:
-        """
-        Check whether a point is inside a key rectangle.
-
-        margin can make the key area slightly larger or smaller.
-        Positive margin makes detection more forgiving.
-        """
-        left = key["x"] - margin
-        right = key["x"] + key["w"] + margin
-        top = key["y"] - margin
-        bottom = key["y"] + key["h"] + margin
+        left = float(key["x"]) - margin
+        right = float(key["x"]) + float(key["w"]) + margin
+        top = float(key["y"]) - margin
+        bottom = float(key["y"]) + float(key["h"]) + margin
 
         return left <= x <= right and top <= y <= bottom
 
@@ -102,23 +117,46 @@ class KeyboardLayout:
         y: float,
         margin: float = 0.0,
     ) -> KeyData | None:
-        """
-        Find the first key that contains the point.
-
-        Returns:
-            key dict if found
-            None if the point is not inside any key
-        """
         for key in self.keys:
             if self.is_inside_key(x, y, key, margin=margin):
                 return key
 
         return None
 
+    def get_marker_centers_mm(self) -> dict[int, dict[str, float]]:
+        """
+        Return marker center positions in paper coordinates.
+
+        If center_x / center_y exist in JSON, use them.
+        Otherwise compute from x, y, size_mm.
+        """
+        centers: dict[int, dict[str, float]] = {}
+
+        for marker in self.markers:
+            marker_id = int(marker["id"])
+
+            if "center_x" in marker and "center_y" in marker:
+                center_x = float(marker["center_x"])
+                center_y = float(marker["center_y"])
+            else:
+                center_x = float(marker["x"]) + float(marker["size_mm"]) / 2.0
+                center_y = float(marker["y"]) + float(marker["size_mm"]) / 2.0
+
+            centers[marker_id] = {
+                "x": center_x,
+                "y": center_y,
+            }
+
+        return centers
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "layout_id": self.layout_id,
+            "title": self.title,
             "board_width_mm": self.board_width_mm,
             "board_height_mm": self.board_height_mm,
+            "dpi": self.dpi,
+            "marker_dictionary": self.marker_dictionary,
+            "markers": self.markers,
             "keys": self.keys,
         }

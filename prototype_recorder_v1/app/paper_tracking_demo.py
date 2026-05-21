@@ -1,101 +1,503 @@
 from __future__ import annotations
 
+import argparse
+import json
+import platform
 import sys
+import time
 from pathlib import Path
 
 import cv2
+import numpy as np
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.append(str(PROJECT_ROOT))
 
-from core.layout import KeyboardLayout
-from vision.aruco_tracker import ArucoTracker
-from vision.camera import CameraSource
-from vision.coordinate_mapper import CoordinateMapper
+DEFAULT_LAYOUT_PATH = "data/layouts/keyboard_full_v1.json"
+DEFAULT_CAMERA_INDEX = 1
+DEFAULT_CAMERA_WIDTH = 1280
+DEFAULT_CAMERA_HEIGHT = 720
+DEFAULT_MIN_MARKERS_TO_UPDATE = 2
+DEFAULT_RANSAC_REPROJ_THRESHOLD = 3.0
+
+
+def load_layout(path: str | Path) -> dict:
+    path = Path(path)
+
+    with open(path, "r", encoding="utf-8") as file:
+        return json.load(file)
+
+
+def get_marker_size(marker: dict) -> float:
+    """
+    Support both old layout field:
+        "size"
+
+    and new layout field:
+        "size_mm"
+    """
+    if "size_mm" in marker:
+        return float(marker["size_mm"])
+
+    if "size" in marker:
+        return float(marker["size"])
+
+    raise ValueError(f"Marker {marker.get('id')} is missing size_mm or size.")
+
+
+def get_marker_board_corners(marker: dict) -> np.ndarray:
+    """
+    Return marker corners in paper coordinate system.
+
+    Unit: mm
+
+    Corner order must match OpenCV ArUco corner order:
+    top-left, top-right, bottom-right, bottom-left
+    """
+    x = float(marker["x"])
+    y = float(marker["y"])
+    s = get_marker_size(marker)
+
+    return np.array(
+        [
+            [x, y],
+            [x + s, y],
+            [x + s, y + s],
+            [x, y + s],
+        ],
+        dtype=np.float32,
+    )
+
+
+def compute_homography_from_markers(
+    corners,
+    ids,
+    layout: dict,
+    ransac_reproj_threshold: float = DEFAULT_RANSAC_REPROJ_THRESHOLD,
+) -> tuple[np.ndarray | None, int, list[int]]:
+    """
+    Compute image -> paper homography from detected ArUco markers.
+
+    Important behavior:
+    - Each marker contributes 4 corner points.
+    - If 2 or more markers are visible, the result is usually much more stable.
+    - This function only computes a candidate H.
+      The caller decides whether to update last_good_H.
+    """
+    if ids is None:
+        return None, 0, []
+
+    marker_map = {
+        int(marker["id"]): marker
+        for marker in layout.get("markers", [])
+    }
+
+    image_points = []
+    board_points = []
+    used_marker_ids = []
+
+    for i, marker_id in enumerate(ids.flatten()):
+        marker_id = int(marker_id)
+
+        if marker_id not in marker_map:
+            continue
+
+        image_corners = corners[i][0].astype(np.float32)
+        board_corners = get_marker_board_corners(marker_map[marker_id])
+
+        image_points.append(image_corners)
+        board_points.append(board_corners)
+        used_marker_ids.append(marker_id)
+
+    marker_count = len(used_marker_ids)
+
+    if marker_count == 0:
+        return None, 0, []
+
+    image_points = np.concatenate(image_points, axis=0).astype(np.float32)
+    board_points = np.concatenate(board_points, axis=0).astype(np.float32)
+
+    if len(image_points) < 4:
+        return None, marker_count, used_marker_ids
+
+    H_img_to_board, _ = cv2.findHomography(
+        image_points,
+        board_points,
+        method=cv2.RANSAC,
+        ransacReprojThreshold=ransac_reproj_threshold,
+    )
+
+    return H_img_to_board, marker_count, used_marker_ids
+
+
+def transform_points(H: np.ndarray, points: np.ndarray) -> np.ndarray:
+    pts = np.array([points], dtype=np.float32)
+    result = cv2.perspectiveTransform(pts, H)
+    return result[0]
+
+
+def draw_board_overlay(
+    frame: np.ndarray,
+    layout: dict,
+    H_board_to_img: np.ndarray,
+) -> None:
+    board_w = float(layout["board_width_mm"])
+    board_h = float(layout["board_height_mm"])
+
+    board_corners = np.array(
+        [
+            [0, 0],
+            [board_w, 0],
+            [board_w, board_h],
+            [0, board_h],
+        ],
+        dtype=np.float32,
+    )
+
+    board_img_corners = transform_points(H_board_to_img, board_corners)
+    board_img_corners = board_img_corners.astype(np.int32)
+
+    cv2.polylines(
+        frame,
+        [board_img_corners],
+        isClosed=True,
+        color=(255, 255, 255),
+        thickness=2,
+    )
+
+    for key in layout["keys"]:
+        x = float(key["x"])
+        y = float(key["y"])
+        w = float(key["w"])
+        h = float(key["h"])
+
+        key_corners = np.array(
+            [
+                [x, y],
+                [x + w, y],
+                [x + w, y + h],
+                [x, y + h],
+            ],
+            dtype=np.float32,
+        )
+
+        key_img_corners = transform_points(H_board_to_img, key_corners)
+        key_img_corners = key_img_corners.astype(np.int32)
+
+        cv2.polylines(
+            frame,
+            [key_img_corners],
+            isClosed=True,
+            color=(255, 255, 255),
+            thickness=2,
+        )
+
+        center_board = np.array(
+            [
+                [x + w / 2.0, y + h / 2.0],
+            ],
+            dtype=np.float32,
+        )
+
+        center_img = transform_points(H_board_to_img, center_board)[0]
+        cx, cy = int(center_img[0]), int(center_img[1])
+
+        cv2.putText(
+            frame,
+            str(key["label"]),
+            (cx - 10, cy + 8),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.65,
+            (255, 255, 255),
+            2,
+            cv2.LINE_AA,
+        )
+
+
+def create_aruco_detector(layout: dict):
+    dictionary_name = (
+        layout.get("marker_dictionary")
+        or layout.get("aruco_dictionary")
+        or "DICT_4X4_50"
+    )
+
+    if not hasattr(cv2.aruco, dictionary_name):
+        raise ValueError(f"Unknown ArUco dictionary: {dictionary_name}")
+
+    dictionary_id = getattr(cv2.aruco, dictionary_name)
+    aruco_dict = cv2.aruco.getPredefinedDictionary(dictionary_id)
+
+    parameters = cv2.aruco.DetectorParameters()
+
+    if hasattr(cv2.aruco, "CORNER_REFINE_SUBPIX"):
+        parameters.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
+
+    if hasattr(cv2.aruco, "ArucoDetector"):
+        detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
+        return detector, dictionary_name
+
+    return None, dictionary_name
+
+
+def detect_markers(detector, frame: np.ndarray, layout: dict):
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    if detector is not None:
+        corners, ids, rejected = detector.detectMarkers(gray)
+        return corners, ids, rejected
+
+    dictionary_name = (
+        layout.get("marker_dictionary")
+        or layout.get("aruco_dictionary")
+        or "DICT_4X4_50"
+    )
+    dictionary_id = getattr(cv2.aruco, dictionary_name)
+    aruco_dict = cv2.aruco.getPredefinedDictionary(dictionary_id)
+    parameters = cv2.aruco.DetectorParameters()
+
+    if hasattr(cv2.aruco, "CORNER_REFINE_SUBPIX"):
+        parameters.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
+
+    return cv2.aruco.detectMarkers(
+        gray,
+        aruco_dict,
+        parameters=parameters,
+    )
+
+
+def open_camera(camera_index: int, width: int, height: int):
+    """
+    Use AVFoundation on macOS when available, matching the old stable prototype.
+    Use default backend elsewhere.
+    """
+    if platform.system() == "Darwin" and hasattr(cv2, "CAP_AVFOUNDATION"):
+        cap = cv2.VideoCapture(camera_index, cv2.CAP_AVFOUNDATION)
+    else:
+        cap = cv2.VideoCapture(camera_index)
+
+    if not cap.isOpened():
+        raise RuntimeError(f"Cannot open camera index {camera_index}.")
+
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+
+    return cap
+
+
+def resolve_path(path_text: str) -> Path:
+    path = Path(path_text)
+
+    if path.is_absolute():
+        return path
+
+    return PROJECT_ROOT / path
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--layout",
+        type=str,
+        default=DEFAULT_LAYOUT_PATH,
+        help="Path to keyboard layout JSON.",
+    )
+
+    parser.add_argument(
+        "--camera",
+        type=int,
+        default=DEFAULT_CAMERA_INDEX,
+        help="Camera index.",
+    )
+
+    parser.add_argument(
+        "--width",
+        type=int,
+        default=DEFAULT_CAMERA_WIDTH,
+        help="Camera width.",
+    )
+
+    parser.add_argument(
+        "--height",
+        type=int,
+        default=DEFAULT_CAMERA_HEIGHT,
+        help="Camera height.",
+    )
+
+    parser.add_argument(
+        "--min-markers",
+        type=int,
+        default=DEFAULT_MIN_MARKERS_TO_UPDATE,
+        help="Minimum visible known markers required to update calibration.",
+    )
+
+    parser.add_argument(
+        "--ransac-threshold",
+        type=float,
+        default=DEFAULT_RANSAC_REPROJ_THRESHOLD,
+        help="RANSAC reprojection threshold for homography.",
+    )
+
+    return parser.parse_args()
 
 
 def main() -> None:
-    layout_path = PROJECT_ROOT / "data" / "layouts" / "keyboard_small.json"
+    args = parse_args()
 
-    layout = KeyboardLayout.from_json(layout_path)
+    layout_path = resolve_path(args.layout)
+    layout = load_layout(layout_path)
 
-    # For the first prototype:
-    # marker 0: top-left
-    # marker 1: top-right
-    # marker 2: bottom-right
-    # marker 3: bottom-left
-    #
-    # These are marker center positions in paper coordinates.
-    # Later we can adjust them based on the actual printed sheet.
-    marker_centers_mm = {
-        0: {"x": 15.0, "y": 15.0},
-        1: {"x": layout.board_width_mm - 15.0, "y": 15.0},
-        2: {"x": layout.board_width_mm - 15.0, "y": layout.board_height_mm - 15.0},
-        3: {"x": 15.0, "y": layout.board_height_mm - 15.0},
-    }
+    print("Paper tracking demo started.")
+    print("Loaded layout:", layout.get("layout_id", layout_path.stem))
+    print("Board:", layout["board_width_mm"], "x", layout["board_height_mm"], "mm")
+    print("Keys:", len(layout.get("keys", [])))
+    print("Markers:", len(layout.get("markers", [])))
+    print("Min markers to update:", args.min_markers)
 
-    camera = CameraSource(
-        camera_index=0,
-        width=1280,
-        height=720,
-        fps=30,
-        flip_horizontal=False,
+    detector, dictionary_name = create_aruco_detector(layout)
+
+    print("Marker dictionary:", dictionary_name)
+
+    cap = open_camera(
+        camera_index=args.camera,
+        width=args.width,
+        height=args.height,
     )
 
-    aruco_tracker = ArucoTracker(dictionary_name="DICT_4X4_50")
-    mapper = CoordinateMapper(marker_centers_mm=marker_centers_mm)
-
-    camera.open()
     print("Camera opened.")
-    print("Press q to quit.")
+    print("Camera index:", args.camera)
+    print("Controls:")
+    print("- q: quit")
+    print("- r: reset calibration")
+    print()
+
+    last_good_H_img_to_board = None
+    last_good_H_board_to_img = None
+    last_marker_count = 0
+    last_used_marker_ids: list[int] = []
+
+    prev_time = time.time()
 
     try:
         while True:
-            frame = camera.read()
+            ret, frame = cap.read()
 
-            if frame is None:
-                print("Failed to read frame.")
+            if not ret or frame is None:
+                print("Cannot read frame.")
                 break
 
-            aruco_result = aruco_tracker.detect(frame.image)
-            homography = mapper.compute_from_markers(aruco_result)
+            output = frame.copy()
 
-            if homography is None:
-                homography = mapper.get_current_result()
+            corners, ids, rejected = detect_markers(detector, frame, layout)
 
-            output = aruco_tracker.draw(frame.image, aruco_result)
+            if ids is not None:
+                cv2.aruco.drawDetectedMarkers(output, corners, ids)
 
-            if homography is not None:
-                output = mapper.draw_paper_axes(
+            H_img_to_board, marker_count, used_marker_ids = compute_homography_from_markers(
+                corners=corners,
+                ids=ids,
+                layout=layout,
+                ransac_reproj_threshold=args.ransac_threshold,
+            )
+
+            updated = False
+
+            if (
+                H_img_to_board is not None
+                and marker_count >= args.min_markers
+            ):
+                H_board_to_img = np.linalg.inv(H_img_to_board)
+
+                last_good_H_img_to_board = H_img_to_board
+                last_good_H_board_to_img = H_board_to_img
+                last_marker_count = marker_count
+                last_used_marker_ids = used_marker_ids
+                updated = True
+
+            if last_good_H_board_to_img is not None:
+                draw_board_overlay(
                     output,
-                    homography,
-                    board_width_mm=layout.board_width_mm,
-                    board_height_mm=layout.board_height_mm,
+                    layout,
+                    last_good_H_board_to_img,
                 )
 
-                status = f"H OK markers={homography.used_marker_ids}"
+            now = time.time()
+            fps = 1.0 / max(now - prev_time, 1e-6)
+            prev_time = now
+
+            if last_good_H_board_to_img is None:
+                calib_text = "Calibration: waiting for markers"
+                calib_color = (0, 0, 255)
+            elif updated:
+                calib_text = (
+                    f"Calibration: updated | "
+                    f"visible={marker_count} | "
+                    f"used={used_marker_ids}"
+                )
+                calib_color = (0, 255, 0)
             else:
-                status = f"No H markers={aruco_result.marker_ids}"
+                calib_text = (
+                    f"Calibration: using last good H | "
+                    f"visible={marker_count} | "
+                    f"last={last_marker_count} | "
+                    f"used={last_used_marker_ids}"
+                )
+                calib_color = (0, 255, 255)
+
+            visible_text = (
+                f"Visible known markers: {marker_count} "
+                f"/ need {args.min_markers}"
+            )
 
             cv2.putText(
                 output,
-                status,
+                calib_text,
                 (20, 40),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.9,
-                (0, 255, 0),
+                0.75,
+                calib_color,
                 2,
+                cv2.LINE_AA,
             )
 
-            cv2.imshow("paper_tracking_demo", output)
+            cv2.putText(
+                output,
+                visible_text,
+                (20, 80),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.75,
+                (0, 255, 0) if marker_count >= args.min_markers else (0, 255, 255),
+                2,
+                cv2.LINE_AA,
+            )
+
+            cv2.putText(
+                output,
+                f"FPS: {fps:.1f}",
+                (20, 120),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.75,
+                (255, 0, 0),
+                2,
+                cv2.LINE_AA,
+            )
+
+            cv2.imshow("Paper Tracking Demo", output)
 
             key = cv2.waitKey(1) & 0xFF
 
             if key == ord("q"):
                 break
 
+            if key == ord("r"):
+                last_good_H_img_to_board = None
+                last_good_H_board_to_img = None
+                last_marker_count = 0
+                last_used_marker_ids = []
+                print("Calibration reset.")
+
     finally:
-        camera.release()
+        cap.release()
         cv2.destroyAllWindows()
         print("Camera released.")
 

@@ -34,7 +34,11 @@ class ArucoTracker:
         self.dictionary = self._get_dictionary(dictionary_name)
         self.parameters = cv2.aruco.DetectorParameters()
 
-        # OpenCV 4.7+ style detector.
+        # Match the older stable prototype.
+        # This improves marker corner accuracy.
+        if hasattr(cv2.aruco, "CORNER_REFINE_SUBPIX"):
+            self.parameters.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
+
         if hasattr(cv2.aruco, "ArucoDetector"):
             self.detector = cv2.aruco.ArucoDetector(
                 self.dictionary,
