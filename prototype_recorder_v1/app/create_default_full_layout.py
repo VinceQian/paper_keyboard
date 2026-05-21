@@ -11,9 +11,28 @@ BOARD_HEIGHT_MM = 210.0
 
 LAYOUT_ID = "keyboard_full_v1"
 
-KEY_W_MM = 22.0
-KEY_H_MM = 20.0
-KEY_GAP_X_MM = 3.0
+# A4 landscape full keyboard layout.
+# Keys are intentionally large, and rows are intentionally far apart
+# to reduce errors caused by hand landmark jitter.
+KEY_W_MM = 24.0
+KEY_H_MM = 24.0
+KEY_GAP_X_MM = 5.0
+
+# Row y positions.
+# Each key is 24mm tall.
+#
+# Number row: 36 - 60
+# Q row:      78 - 102
+# A row:      120 - 144
+# Z row:      160 - 184
+#
+# This creates large vertical gaps between rows.
+ROW_YS_MM = [
+    36.0,
+    78.0,
+    120.0,
+    160.0,
+]
 
 ROW_LABELS = [
     list("1234567890"),
@@ -22,45 +41,45 @@ ROW_LABELS = [
     list("ZXCVBNM"),
 ]
 
-ROW_YS_MM = [
-    42.0,
-    68.0,
-    94.0,
-    120.0,
-]
-
 
 def build_marker_specs() -> list[dict]:
     marker_size_mm = 18.0
-    marker_margin_mm = 6.0
 
-    left_x = marker_margin_mm
-    top_y = marker_margin_mm
-    right_x = BOARD_WIDTH_MM - marker_margin_mm - marker_size_mm
-    bottom_y = BOARD_HEIGHT_MM - marker_margin_mm - marker_size_mm
+    # Top markers stay near top-left and top-right.
+    top_y = 6.0
+    left_top_x = 6.0
+    right_top_x = BOARD_WIDTH_MM - 6.0 - marker_size_mm
+
+    # Bottom markers are moved away from bottom corners.
+    # Bottom corners are easy to block when the hand rests near the keyboard.
+    #
+    # These two markers are still far enough apart to help homography stability.
+    bottom_y = BOARD_HEIGHT_MM - 6.0 - marker_size_mm
+    bottom_left_x = 87.0
+    bottom_right_x = 192.0
 
     return [
         {
             "id": 0,
-            "x": left_x,
+            "x": left_top_x,
             "y": top_y,
             "size_mm": marker_size_mm,
         },
         {
             "id": 1,
-            "x": right_x,
+            "x": right_top_x,
             "y": top_y,
             "size_mm": marker_size_mm,
         },
         {
             "id": 2,
-            "x": right_x,
+            "x": bottom_right_x,
             "y": bottom_y,
             "size_mm": marker_size_mm,
         },
         {
             "id": 3,
-            "x": left_x,
+            "x": bottom_left_x,
             "y": bottom_y,
             "size_mm": marker_size_mm,
         },
@@ -124,7 +143,13 @@ def main() -> None:
     print("Created default full keyboard layout:")
     print(output_path)
     print()
-    print("You can now edit this JSON and preview it with:")
+    print("Layout settings:")
+    print(f"- Board: {BOARD_WIDTH_MM}mm x {BOARD_HEIGHT_MM}mm")
+    print(f"- Key size: {KEY_W_MM}mm x {KEY_H_MM}mm")
+    print(f"- Horizontal key gap: {KEY_GAP_X_MM}mm")
+    print(f"- Row Y positions: {ROW_YS_MM}")
+    print()
+    print("Next step:")
     print(f"python app/preview_layout.py data/layouts/{LAYOUT_ID}.json")
 
 
