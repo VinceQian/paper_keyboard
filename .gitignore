@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environments
+.venv/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Recorded demo data
+prototype_recorder_v1/data/recorded/*.json
+prototype_recorder_v1/data/recorded/*.csv
+prototype_recorder_v1/data/recorded/*.mp4
