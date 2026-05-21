@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import sys
 import time
 from pathlib import Path
@@ -12,6 +11,24 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(PROJECT_ROOT))
 
 from core.layout_renderer import LayoutRenderer
+
+
+# ============================================================
+# User-adjustable settings
+# ============================================================
+
+LAYOUT_PATH = PROJECT_ROOT / "data" / "layouts" / "keyboard_full_v1.json"
+
+DPI = 300
+
+# 预览窗口最大尺寸，不影响实际导出 PNG 的尺寸。
+MAX_PREVIEW_WIDTH = 1200
+MAX_PREVIEW_HEIGHT = 850
+
+# 文件检查间隔。
+REFRESH_INTERVAL_SECONDS = 0.5
+
+OUTPUT_DIR = PROJECT_ROOT / "data" / "generated"
 
 
 def make_error_image(message: str) -> np.ndarray:
@@ -75,48 +92,11 @@ def get_output_path(layout_path: Path, output_dir: Path) -> Path:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "layout_path",
-        type=str,
-        help="Path to layout JSON file.",
-    )
-    parser.add_argument(
-        "--dpi",
-        type=int,
-        default=300,
-        help="DPI for generated printable PNG.",
-    )
-    parser.add_argument(
-        "--interval",
-        type=float,
-        default=0.5,
-        help="Preview refresh interval in seconds.",
-    )
-    parser.add_argument(
-        "--max-width",
-        type=int,
-        default=1200,
-        help="Max preview window width.",
-    )
-    parser.add_argument(
-        "--max-height",
-        type=int,
-        default=850,
-        help="Max preview window height.",
-    )
-
-    args = parser.parse_args()
-
-    layout_path = Path(args.layout_path)
-
-    if not layout_path.is_absolute():
-        layout_path = PROJECT_ROOT / layout_path
-
-    output_dir = PROJECT_ROOT / "data" / "generated"
+    layout_path = Path(LAYOUT_PATH)
+    output_dir = Path(OUTPUT_DIR)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    renderer = LayoutRenderer(dpi=args.dpi)
+    renderer = LayoutRenderer(dpi=DPI)
 
     last_mtime = None
     last_preview = None
@@ -129,6 +109,7 @@ def main() -> None:
     print("- Edit and save the JSON file to refresh preview")
     print("- Press s in preview window to save PNG")
     print("- Press q in preview window to quit")
+    print()
 
     while True:
         try:
@@ -140,8 +121,8 @@ def main() -> None:
 
                 preview = renderer.make_preview_image(
                     image,
-                    max_width=args.max_width,
-                    max_height=args.max_height,
+                    max_width=MAX_PREVIEW_WIDTH,
+                    max_height=MAX_PREVIEW_HEIGHT,
                 )
 
                 last_mtime = current_mtime
@@ -153,7 +134,7 @@ def main() -> None:
             if last_preview is not None:
                 cv2.imshow("layout_preview", last_preview)
 
-            key = cv2.waitKey(int(args.interval * 1000)) & 0xFF
+            key = cv2.waitKey(int(REFRESH_INTERVAL_SECONDS * 1000)) & 0xFF
 
             if key == ord("q"):
                 break
@@ -168,7 +149,7 @@ def main() -> None:
             error_image = make_error_image(str(error))
             cv2.imshow("layout_preview", error_image)
 
-            key = cv2.waitKey(int(args.interval * 1000)) & 0xFF
+            key = cv2.waitKey(int(REFRESH_INTERVAL_SECONDS * 1000)) & 0xFF
 
             if key == ord("q"):
                 break

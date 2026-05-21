@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import sys
 import time
 from pathlib import Path
@@ -19,109 +18,76 @@ from vision.camera import CameraSource
 from vision.hand_tracker import HandTracker
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
+# ============================================================
+# User-adjustable settings
+# 你平时要调参数，主要改这里，不需要命令行传参。
+# ============================================================
 
-    parser.add_argument(
-        "--layout",
-        type=str,
-        default="data/layouts/keyboard_full_v1.json",
-        help="Path to keyboard layout JSON.",
-    )
+# Layout and model files
+LAYOUT_PATH = PROJECT_ROOT / "data" / "layouts" / "keyboard_full_v1.json"
+HAND_MODEL_PATH = PROJECT_ROOT / "models" / "hand_landmarker.task"
+OUTPUT_DIR = PROJECT_ROOT / "data" / "recorded"
 
-    parser.add_argument(
-        "--model",
-        type=str,
-        default="models/hand_landmarker.task",
-        help="Path to MediaPipe hand landmarker model.",
-    )
+# Camera settings
+CAMERA_INDEX = 1
+CAMERA_WIDTH = 1280
+CAMERA_HEIGHT = 720
+CAMERA_FPS = 30
+FLIP_CAMERA = False
 
-    parser.add_argument(
-        "--camera",
-        type=int,
-        default=1,
-        help="Camera index.",
-    )
+# Board tracking settings
+# 至少看到多少个 marker 才更新纸面校准。
+# 如果看不到足够 marker，会继续使用 last good homography。
+MIN_MARKERS_TO_UPDATE = 2
+RANSAC_REPROJ_THRESHOLD = 3.0
 
-    parser.add_argument(
-        "--width",
-        type=int,
-        default=1280,
-        help="Camera width.",
-    )
+# Candidate detection settings
+# 缩小实际按键判定区域，单位 mm。
+# 0 表示使用完整按键矩形。
+SHRINK_X_MM = 0.0
+SHRINK_Y_MM = 0.0
 
-    parser.add_argument(
-        "--height",
-        type=int,
-        default=720,
-        help="Camera height.",
-    )
+# Audio tap detection settings
+# AUDIO_WINDOW_SECONDS:
+# 敲击声音出现后，在多长时间内认为 audio_recent=True。
+# 线上演示如果慢慢按，可以先用 0.18~0.20。
+AUDIO_WINDOW_SECONDS = 0.20
+AUDIO_MIN_THRESHOLD = 0.03
+AUDIO_PEAK_MULTIPLIER = 4.0
+AUDIO_COOLDOWN_SECONDS = 0.18
 
-    parser.add_argument(
-        "--min-markers",
-        type=int,
-        default=2,
-        help="Minimum visible markers required to update calibration.",
-    )
+# Tap state settings
+# STABLE_FRAMES:
+# 当前 key 连续稳定多少帧后，才允许音频确认。
+# RELEASE_FRAMES:
+# 手指离开按键区域多少帧后，才允许下一次 tap。
+STABLE_FRAMES = 2
+RELEASE_FRAMES = 2
 
-    parser.add_argument(
-        "--record-name",
-        type=str,
-        default=None,
-        help="Optional output filename for recorded JSON.",
-    )
-
-    parser.add_argument(
-        "--stable-frames",
-        type=int,
-        default=2,
-        help="How many stable visual frames are required before accepting a tap.",
-    )
-
-    parser.add_argument(
-        "--release-frames",
-        type=int,
-        default=2,
-        help="How many empty frames are required before accepting the next tap.",
-    )
-
-    return parser.parse_args()
-
-
-def resolve_path(path_text: str) -> Path:
-    path = Path(path_text)
-
-    if path.is_absolute():
-        return path
-
-    return PROJECT_ROOT / path
+# Recording settings
+# RECORD_NAME = None 会自动生成 session_xxx.json
+RECORD_NAME = None
 
 
 def main() -> None:
-    args = parse_args()
-
-    layout_path = resolve_path(args.layout)
-    model_path = resolve_path(args.model)
-    output_dir = PROJECT_ROOT / "data" / "recorded"
-
-    layout = KeyboardLayout.from_json(layout_path)
+    layout = KeyboardLayout.from_json(LAYOUT_PATH)
 
     camera = CameraSource(
-        camera_index=args.camera,
-        width=args.width,
-        height=args.height,
-        fps=30,
-        flip_horizontal=False,
+        camera_index=CAMERA_INDEX,
+        width=CAMERA_WIDTH,
+        height=CAMERA_HEIGHT,
+        fps=CAMERA_FPS,
+        flip_horizontal=FLIP_CAMERA,
     )
 
     board_tracker = BoardTracker(
         layout=layout,
-        min_markers_to_update=args.min_markers,
-        ransac_reproj_threshold=3.0,
+        min_markers_to_update=MIN_MARKERS_TO_UPDATE,
+        ransac_reproj_threshold=RANSAC_REPROJ_THRESHOLD,
     )
 
     hand_tracker = HandTracker(
-        model_path=model_path,
+        model_path=HAND_MODEL_PATH,
         num_hands=1,
     )
 
@@ -129,27 +95,30 @@ def main() -> None:
         layout=layout,
         margin=0.0,
         include_none=False,
+        shrink_x=SHRINK_X_MM,
+        shrink_y=SHRINK_Y_MM,
     )
 
     audio_detector = AudioPeakDetector(
-        min_threshold=0.03,
-        peak_multiplier=4.0,
-        cooldown_seconds=0.18,
-        recent_window_seconds=0.20,
+        min_threshold=AUDIO_MIN_THRESHOLD,
+        peak_multiplier=AUDIO_PEAK_MULTIPLIER,
+        cooldown_seconds=AUDIO_COOLDOWN_SECONDS,
+        recent_window_seconds=AUDIO_WINDOW_SECONDS,
     )
 
     tap_machine = TapStateMachine(
-        stable_frames=args.stable_frames,
-        release_frames=args.release_frames,
+        stable_frames=STABLE_FRAMES,
+        release_frames=RELEASE_FRAMES,
     )
 
     recorder = DemoRecorder(
-        output_dir=output_dir,
+        output_dir=OUTPUT_DIR,
         layout_id=layout.layout_id,
-        source="live_candidate_record_demo",
+        source="live_candidate_record_demo_direct",
         notes=(
-            "Only confirmed tap events are recorded. "
-            "Continuous non-tap frames are not saved."
+            "Direct tap detection demo. "
+            "Uses current visual candidate + recent audio peak. "
+            "No history buffer or motion-based tap selection."
         ),
     )
 
@@ -157,9 +126,17 @@ def main() -> None:
     audio_detector.start()
 
     print("Live candidate record demo started.")
+    print("Mode: direct current-key detection")
     print("Layout:", layout.layout_id)
-    print("Camera:", args.camera)
-    print("Model:", model_path)
+    print("Camera:", CAMERA_INDEX)
+    print("Model:", HAND_MODEL_PATH)
+    print()
+    print("Tap decision:")
+    print("- current visual candidate key")
+    print(f"- audio recent window: {AUDIO_WINDOW_SECONDS}s")
+    print(f"- stable frames: {STABLE_FRAMES}")
+    print(f"- release frames: {RELEASE_FRAMES}")
+    print(f"- hitbox shrink: x={SHRINK_X_MM}mm, y={SHRINK_Y_MM}mm")
     print()
     print("Controls:")
     print("- q: quit")
@@ -167,10 +144,6 @@ def main() -> None:
     print("- c: clear output text and tap state")
     print("- space: toggle event recording")
     print("- s: save recording")
-    print()
-    print("Recording rule:")
-    print("- When recording is enabled, only confirmed tap events are saved.")
-    print("- Hover frames are displayed but not recorded.")
     print()
 
     recording_enabled = False
@@ -180,8 +153,8 @@ def main() -> None:
     last_tap_event = None
     last_tap_time = 0.0
 
-    start_time = time.time()
-    prev_time = time.time()
+    start_perf_time = time.perf_counter()
+    prev_perf_time = time.perf_counter()
 
     try:
         while True:
@@ -197,7 +170,7 @@ def main() -> None:
             board_result = board_tracker.update(frame)
             board_tracker.draw_markers(output, board_result)
 
-            timestamp_ms = int((time.time() - start_time) * 1000)
+            timestamp_ms = int((camera_frame.perf_timestamp - start_perf_time) * 1000)
 
             hand_result = hand_tracker.detect(frame, timestamp_ms)
             hand_tracker.draw(output, hand_result)
@@ -239,7 +212,9 @@ def main() -> None:
                 if candidates:
                     current_key_label = candidates[0]["label"]
 
-            audio_recent = audio_detector.has_recent_peak(window_seconds=0.20)
+            audio_recent = audio_detector.has_recent_peak(
+                window_seconds=AUDIO_WINDOW_SECONDS
+            )
 
             tap_event = tap_machine.update(
                 key_label=current_key_label,
@@ -249,7 +224,7 @@ def main() -> None:
             if tap_event is not None:
                 output_text += tap_event
                 last_tap_event = tap_event
-                last_tap_time = time.time()
+                last_tap_time = time.perf_counter()
 
                 print("Tap:", tap_event, "| Output:", output_text)
 
@@ -264,13 +239,20 @@ def main() -> None:
                             "event_type": "confirmed_tap",
                             "tap_event": tap_event,
                             "output_text": output_text,
+                            "mode": "direct_current_key",
                             "tap_state": tap_machine.state,
+                            "audio_recent": audio_recent,
+                            "audio_status": audio_detector.get_status().__dict__,
                             "board_calibrated": board_result.calibrated,
                             "board_updated": board_result.updated,
                             "visible_marker_count": board_result.visible_marker_count,
                             "used_marker_ids": board_result.used_marker_ids,
                             "current_key_label": current_key_label,
-                            "audio_status": audio_detector.get_status().__dict__,
+                            "audio_window": AUDIO_WINDOW_SECONDS,
+                            "stable_frames": STABLE_FRAMES,
+                            "release_frames": RELEASE_FRAMES,
+                            "shrink_x": SHRINK_X_MM,
+                            "shrink_y": SHRINK_Y_MM,
                         },
                     )
 
@@ -281,9 +263,9 @@ def main() -> None:
                     current_key_label=current_key_label,
                 )
 
-            now = time.time()
-            fps = 1.0 / max(now - prev_time, 1e-6)
-            prev_time = now
+            now_perf_time = time.perf_counter()
+            fps = 1.0 / max(now_perf_time - prev_perf_time, 1e-6)
+            prev_perf_time = now_perf_time
 
             audio_status = audio_detector.get_status()
 
@@ -297,13 +279,14 @@ def main() -> None:
                 recording_enabled=recording_enabled,
                 recorded_events=len(recorder.frames),
                 audio_status=audio_status,
+                audio_recent=audio_recent,
                 tap_state=tap_machine.state,
                 output_text=output_text,
                 last_tap_event=last_tap_event,
                 last_tap_time=last_tap_time,
             )
 
-            cv2.imshow("Live Candidate Record Demo", output)
+            cv2.imshow("Live Candidate Record Demo - Direct", output)
 
             key = cv2.waitKey(1) & 0xFF
 
@@ -326,13 +309,13 @@ def main() -> None:
                 print("Recording enabled:", recording_enabled)
 
             if key == ord("s"):
-                output_path = recorder.save(args.record_name)
+                output_path = recorder.save(RECORD_NAME)
                 saved_once = True
                 print("Saved recording:", output_path)
 
     finally:
         if recorder.frames and not saved_once:
-            output_path = recorder.save(args.record_name)
+            output_path = recorder.save(RECORD_NAME)
             print("Auto-saved recording:", output_path)
 
         audio_detector.stop()
@@ -352,6 +335,7 @@ def draw_status(
     recording_enabled,
     recorded_events,
     audio_status,
+    audio_recent,
     tap_state,
     output_text,
     last_tap_event,
@@ -418,13 +402,15 @@ def draw_status(
         cv2.LINE_AA,
     )
 
+    audio_color = (0, 255, 255) if audio_recent else (180, 180, 180)
+
     cv2.putText(
         output,
-        f"Audio recent: {audio_status.recent_peak}",
+        f"Audio recent: {audio_recent} | peaks={audio_status.peak_counter}",
         (20, 160),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.65,
-        (0, 255, 255) if audio_status.recent_peak else (180, 180, 180),
+        audio_color,
         2,
         cv2.LINE_AA,
     )
@@ -438,7 +424,7 @@ def draw_status(
         (20, 200),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.6,
-        (0, 255, 255) if audio_status.recent_peak else (180, 180, 180),
+        audio_color,
         2,
         cv2.LINE_AA,
     )
@@ -456,8 +442,22 @@ def draw_status(
 
     cv2.putText(
         output,
-        f"Output: {output_text}",
+        (
+            f"Direct mode | audio window={AUDIO_WINDOW_SECONDS:.2f}s | "
+            f"stable={STABLE_FRAMES} | release={RELEASE_FRAMES}"
+        ),
         (20, 280),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.6,
+        (255, 255, 255),
+        2,
+        cv2.LINE_AA,
+    )
+
+    cv2.putText(
+        output,
+        f"Output: {output_text}",
+        (20, 320),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.75,
         (255, 255, 0),
@@ -465,11 +465,11 @@ def draw_status(
         cv2.LINE_AA,
     )
 
-    if last_tap_event is not None and time.time() - last_tap_time < 0.5:
+    if last_tap_event is not None and time.perf_counter() - last_tap_time < 0.5:
         cv2.putText(
             output,
             f"TAP: {last_tap_event}",
-            (20, 330),
+            (20, 370),
             cv2.FONT_HERSHEY_SIMPLEX,
             1.2,
             (0, 255, 255),
@@ -486,7 +486,7 @@ def draw_status(
     cv2.putText(
         output,
         record_text,
-        (20, 380),
+        (20, 420),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.65,
         record_color,
@@ -497,7 +497,7 @@ def draw_status(
     cv2.putText(
         output,
         f"FPS: {fps:.1f}",
-        (20, 420),
+        (20, 460),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.65,
         (255, 0, 0),

@@ -11,7 +11,8 @@ import numpy as np
 @dataclass
 class CameraFrame:
     frame_id: int
-    timestamp: float
+    timestamp: float          # relative time since camera opened
+    perf_timestamp: float     # absolute monotonic time, for audio-video alignment
     image: np.ndarray
 
 
@@ -22,7 +23,8 @@ class CameraSource:
     Responsibilities:
     - open camera
     - read frames
-    - attach frame_id and timestamp
+    - attach frame_id
+    - attach both relative timestamp and perf_timestamp
     - release camera safely
     """
 
@@ -67,6 +69,7 @@ class CameraSource:
             raise RuntimeError("Camera is not opened. Call open() first.")
 
         ok, image = self.cap.read()
+        perf_timestamp = time.perf_counter()
 
         if not ok or image is None:
             return None
@@ -75,11 +78,12 @@ class CameraSource:
             image = cv2.flip(image, 1)
 
         self.frame_id += 1
-        timestamp = time.perf_counter() - self.start_time
+        timestamp = perf_timestamp - self.start_time
 
         return CameraFrame(
             frame_id=self.frame_id,
             timestamp=timestamp,
+            perf_timestamp=perf_timestamp,
             image=image,
         )
 

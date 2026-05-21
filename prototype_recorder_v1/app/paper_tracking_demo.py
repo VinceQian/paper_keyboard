@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import json
 import platform
 import sys
@@ -13,12 +12,18 @@ import numpy as np
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-DEFAULT_LAYOUT_PATH = "data/layouts/keyboard_full_v1.json"
-DEFAULT_CAMERA_INDEX = 1
-DEFAULT_CAMERA_WIDTH = 1280
-DEFAULT_CAMERA_HEIGHT = 720
-DEFAULT_MIN_MARKERS_TO_UPDATE = 2
-DEFAULT_RANSAC_REPROJ_THRESHOLD = 3.0
+# ============================================================
+# User-adjustable settings
+# ============================================================
+
+LAYOUT_PATH = PROJECT_ROOT / "data" / "layouts" / "keyboard_full_v1.json"
+
+CAMERA_INDEX = 1
+CAMERA_WIDTH = 1280
+CAMERA_HEIGHT = 720
+
+MIN_MARKERS_TO_UPDATE = 2
+RANSAC_REPROJ_THRESHOLD = 3.0
 
 
 def load_layout(path: str | Path) -> dict:
@@ -29,13 +34,6 @@ def load_layout(path: str | Path) -> dict:
 
 
 def get_marker_size(marker: dict) -> float:
-    """
-    Support both old layout field:
-        "size"
-
-    and new layout field:
-        "size_mm"
-    """
     if "size_mm" in marker:
         return float(marker["size_mm"])
 
@@ -46,14 +44,6 @@ def get_marker_size(marker: dict) -> float:
 
 
 def get_marker_board_corners(marker: dict) -> np.ndarray:
-    """
-    Return marker corners in paper coordinate system.
-
-    Unit: mm
-
-    Corner order must match OpenCV ArUco corner order:
-    top-left, top-right, bottom-right, bottom-left
-    """
     x = float(marker["x"])
     y = float(marker["y"])
     s = get_marker_size(marker)
@@ -73,17 +63,8 @@ def compute_homography_from_markers(
     corners,
     ids,
     layout: dict,
-    ransac_reproj_threshold: float = DEFAULT_RANSAC_REPROJ_THRESHOLD,
+    ransac_reproj_threshold: float,
 ) -> tuple[np.ndarray | None, int, list[int]]:
-    """
-    Compute image -> paper homography from detected ArUco markers.
-
-    Important behavior:
-    - Each marker contributes 4 corner points.
-    - If 2 or more markers are visible, the result is usually much more stable.
-    - This function only computes a candidate H.
-      The caller decides whether to update last_good_H.
-    """
     if ids is None:
         return None, 0, []
 
@@ -266,10 +247,6 @@ def detect_markers(detector, frame: np.ndarray, layout: dict):
 
 
 def open_camera(camera_index: int, width: int, height: int):
-    """
-    Use AVFoundation on macOS when available, matching the old stable prototype.
-    Use default backend elsewhere.
-    """
     if platform.system() == "Darwin" and hasattr(cv2, "CAP_AVFOUNDATION"):
         cap = cv2.VideoCapture(camera_index, cv2.CAP_AVFOUNDATION)
     else:
@@ -284,88 +261,28 @@ def open_camera(camera_index: int, width: int, height: int):
     return cap
 
 
-def resolve_path(path_text: str) -> Path:
-    path = Path(path_text)
-
-    if path.is_absolute():
-        return path
-
-    return PROJECT_ROOT / path
-
-
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "--layout",
-        type=str,
-        default=DEFAULT_LAYOUT_PATH,
-        help="Path to keyboard layout JSON.",
-    )
-
-    parser.add_argument(
-        "--camera",
-        type=int,
-        default=DEFAULT_CAMERA_INDEX,
-        help="Camera index.",
-    )
-
-    parser.add_argument(
-        "--width",
-        type=int,
-        default=DEFAULT_CAMERA_WIDTH,
-        help="Camera width.",
-    )
-
-    parser.add_argument(
-        "--height",
-        type=int,
-        default=DEFAULT_CAMERA_HEIGHT,
-        help="Camera height.",
-    )
-
-    parser.add_argument(
-        "--min-markers",
-        type=int,
-        default=DEFAULT_MIN_MARKERS_TO_UPDATE,
-        help="Minimum visible known markers required to update calibration.",
-    )
-
-    parser.add_argument(
-        "--ransac-threshold",
-        type=float,
-        default=DEFAULT_RANSAC_REPROJ_THRESHOLD,
-        help="RANSAC reprojection threshold for homography.",
-    )
-
-    return parser.parse_args()
-
-
 def main() -> None:
-    args = parse_args()
-
-    layout_path = resolve_path(args.layout)
-    layout = load_layout(layout_path)
+    layout = load_layout(LAYOUT_PATH)
 
     print("Paper tracking demo started.")
-    print("Loaded layout:", layout.get("layout_id", layout_path.stem))
+    print("Loaded layout:", layout.get("layout_id", LAYOUT_PATH.stem))
     print("Board:", layout["board_width_mm"], "x", layout["board_height_mm"], "mm")
     print("Keys:", len(layout.get("keys", [])))
     print("Markers:", len(layout.get("markers", [])))
-    print("Min markers to update:", args.min_markers)
+    print("Min markers to update:", MIN_MARKERS_TO_UPDATE)
 
     detector, dictionary_name = create_aruco_detector(layout)
 
     print("Marker dictionary:", dictionary_name)
 
     cap = open_camera(
-        camera_index=args.camera,
-        width=args.width,
-        height=args.height,
+        camera_index=CAMERA_INDEX,
+        width=CAMERA_WIDTH,
+        height=CAMERA_HEIGHT,
     )
 
     print("Camera opened.")
-    print("Camera index:", args.camera)
+    print("Camera index:", CAMERA_INDEX)
     print("Controls:")
     print("- q: quit")
     print("- r: reset calibration")
@@ -397,14 +314,14 @@ def main() -> None:
                 corners=corners,
                 ids=ids,
                 layout=layout,
-                ransac_reproj_threshold=args.ransac_threshold,
+                ransac_reproj_threshold=RANSAC_REPROJ_THRESHOLD,
             )
 
             updated = False
 
             if (
                 H_img_to_board is not None
-                and marker_count >= args.min_markers
+                and marker_count >= MIN_MARKERS_TO_UPDATE
             ):
                 H_board_to_img = np.linalg.inv(H_img_to_board)
 
@@ -446,7 +363,7 @@ def main() -> None:
 
             visible_text = (
                 f"Visible known markers: {marker_count} "
-                f"/ need {args.min_markers}"
+                f"/ need {MIN_MARKERS_TO_UPDATE}"
             )
 
             cv2.putText(
@@ -466,7 +383,7 @@ def main() -> None:
                 (20, 80),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.75,
-                (0, 255, 0) if marker_count >= args.min_markers else (0, 255, 255),
+                (0, 255, 0) if marker_count >= MIN_MARKERS_TO_UPDATE else (0, 255, 255),
                 2,
                 cv2.LINE_AA,
             )

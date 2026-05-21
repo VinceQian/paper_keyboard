@@ -9,30 +9,18 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 BOARD_WIDTH_MM = 297.0
 BOARD_HEIGHT_MM = 210.0
 
+# Keep the same layout id so the rest of the pipeline can still use
+# data/layouts/keyboard_full_v1.json by default.
 LAYOUT_ID = "keyboard_full_v1"
 
-# A4 landscape full keyboard layout.
-# Keys are intentionally large, and rows are intentionally far apart
-# to reduce errors caused by hand landmark jitter.
-KEY_W_MM = 24.0
-KEY_H_MM = 24.0
-KEY_GAP_X_MM = 5.0
-
-# Row y positions.
-# Each key is 24mm tall.
-#
-# Number row: 36 - 60
-# Q row:      78 - 102
-# A row:      120 - 144
-# Z row:      160 - 184
-#
-# This creates large vertical gaps between rows.
-ROW_YS_MM = [
-    36.0,
-    78.0,
-    120.0,
-    160.0,
-]
+# New design:
+# - key size goes back to around the earlier scale
+# - horizontal gaps stay narrow
+# - rows are spread out a bit more, but the whole keyboard block is moved upward
+#   so the bottom area can be reserved for markers
+KEY_W_MM = 20.0
+KEY_H_MM = 22.0
+KEY_GAP_X_MM = 3.0
 
 ROW_LABELS = [
     list("1234567890"),
@@ -41,45 +29,94 @@ ROW_LABELS = [
     list("ZXCVBNM"),
 ]
 
+# Row ranges:
+# 30 - 52
+# 62 - 84
+# 94 - 116
+# 126 - 148
+#
+# So each row gap is about 10mm, and the bottom area stays relatively open.
+ROW_YS_MM = [
+    30.0,
+    62.0,
+    94.0,
+    126.0,
+]
+
 
 def build_marker_specs() -> list[dict]:
     marker_size_mm = 18.0
 
-    # Top markers stay near top-left and top-right.
-    top_y = 6.0
-    left_top_x = 6.0
-    right_top_x = BOARD_WIDTH_MM - 6.0 - marker_size_mm
+    # Basic anchor coordinates
+    left_x = 6.0
+    right_x = BOARD_WIDTH_MM - 6.0 - marker_size_mm
 
-    # Bottom markers are moved away from bottom corners.
-    # Bottom corners are easy to block when the hand rests near the keyboard.
-    #
-    # These two markers are still far enough apart to help homography stability.
-    bottom_y = BOARD_HEIGHT_MM - 6.0 - marker_size_mm
-    bottom_left_x = 87.0
-    bottom_right_x = 192.0
+    top_y = 6.0
+    side_y = 72.0
+    bottom_y = BOARD_HEIGHT_MM - 6.0 - marker_size_mm  # 186 for A4 landscape
+
+    # Top middle markers
+    top_mid_left_x = 96.0
+    top_mid_right_x = 183.0
+
+    # Bottom middle markers
+    bottom_mid_left_x = 96.0
+    bottom_mid_right_x = 183.0
 
     return [
+        # top left
         {
             "id": 0,
-            "x": left_top_x,
+            "x": left_x,
             "y": top_y,
             "size_mm": marker_size_mm,
         },
+        # top middle-left
         {
             "id": 1,
-            "x": right_top_x,
+            "x": top_mid_left_x,
             "y": top_y,
             "size_mm": marker_size_mm,
         },
+        # top middle-right
         {
             "id": 2,
-            "x": bottom_right_x,
+            "x": top_mid_right_x,
+            "y": top_y,
+            "size_mm": marker_size_mm,
+        },
+        # top right
+        {
+            "id": 3,
+            "x": right_x,
+            "y": top_y,
+            "size_mm": marker_size_mm,
+        },
+        # left side upper
+        {
+            "id": 4,
+            "x": left_x,
+            "y": side_y,
+            "size_mm": marker_size_mm,
+        },
+        # right side upper
+        {
+            "id": 5,
+            "x": right_x,
+            "y": side_y,
+            "size_mm": marker_size_mm,
+        },
+        # bottom middle-left
+        {
+            "id": 6,
+            "x": bottom_mid_left_x,
             "y": bottom_y,
             "size_mm": marker_size_mm,
         },
+        # bottom middle-right
         {
-            "id": 3,
-            "x": bottom_left_x,
+            "id": 7,
+            "x": bottom_mid_right_x,
             "y": bottom_y,
             "size_mm": marker_size_mm,
         },
@@ -140,14 +177,15 @@ def main() -> None:
     with open(output_path, "w", encoding="utf-8") as file:
         json.dump(layout, file, ensure_ascii=False, indent=2)
 
-    print("Created default full keyboard layout:")
+    print("Created keyboard layout:")
     print(output_path)
     print()
     print("Layout settings:")
     print(f"- Board: {BOARD_WIDTH_MM}mm x {BOARD_HEIGHT_MM}mm")
     print(f"- Key size: {KEY_W_MM}mm x {KEY_H_MM}mm")
-    print(f"- Horizontal key gap: {KEY_GAP_X_MM}mm")
+    print(f"- Horizontal gap: {KEY_GAP_X_MM}mm")
     print(f"- Row Y positions: {ROW_YS_MM}")
+    print(f"- Marker count: {len(layout['markers'])}")
     print()
     print("Next step:")
     print(f"python app/preview_layout.py data/layouts/{LAYOUT_ID}.json")

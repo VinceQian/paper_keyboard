@@ -13,22 +13,9 @@ class CandidateDetector:
     """
     Convert finger positions into candidate key results.
 
-    Input example:
-    [
-        {"id": "right_index", "x": 55, "y": 110, "confidence": 1.0}
-    ]
-
-    Output example:
-    [
-        {
-            "finger_id": "right_index",
-            "key_id": "A",
-            "label": "A",
-            "x": 55,
-            "y": 110,
-            "score": 1.0
-        }
-    ]
+    Supports shrink_x / shrink_y:
+    - visual key rectangle can stay large
+    - active hitbox can be slightly smaller
     """
 
     def __init__(
@@ -36,10 +23,14 @@ class CandidateDetector:
         layout: KeyboardLayout,
         margin: float = 0.0,
         include_none: bool = False,
+        shrink_x: float = 0.0,
+        shrink_y: float = 0.0,
     ):
         self.layout = layout
         self.margin = margin
         self.include_none = include_none
+        self.shrink_x = shrink_x
+        self.shrink_y = shrink_y
 
     def detect_candidates(self, fingers: list[FingerData]) -> list[CandidateData]:
         candidates: list[CandidateData] = []
@@ -60,7 +51,7 @@ class CandidateDetector:
         y = float(finger["y"])
         confidence = float(finger.get("confidence", 1.0))
 
-        key = self.layout.find_key_by_point(x, y, margin=self.margin)
+        key = self._find_key_with_shrink(x, y)
 
         if key is None:
             if not self.include_none:
@@ -83,3 +74,15 @@ class CandidateDetector:
             "y": y,
             "score": confidence,
         }
+
+    def _find_key_with_shrink(self, x: float, y: float):
+        for key in self.layout.keys:
+            left = float(key["x"]) + self.shrink_x - self.margin
+            right = float(key["x"]) + float(key["w"]) - self.shrink_x + self.margin
+            top = float(key["y"]) + self.shrink_y - self.margin
+            bottom = float(key["y"]) + float(key["h"]) - self.shrink_y + self.margin
+
+            if left <= x <= right and top <= y <= bottom:
+                return key
+
+        return None

@@ -16,21 +16,17 @@ class AudioStatus:
     threshold: float
     noise_floor: float
     seconds_since_last_peak: float
+    peak_counter: int
 
 
 class AudioPeakDetector:
     """
     Detect short tap-like audio peaks.
 
-    This detector does not know which key was pressed.
-    It only answers:
-
-        Did a tap-like sound happen recently?
-
-    Key ideas:
-    - Use RMS to estimate background noise.
-    - Use peak amplitude to detect sudden tap events.
-    - Use cooldown to avoid one tap triggering many times.
+    Important:
+    - Uses time.perf_counter() for monotonic timing.
+    - Provides consume_peak(), so the main loop can handle each peak once.
+    - Estimates peak_time inside the audio block instead of using only callback time.
     """
 
     def __init__(
@@ -40,7 +36,7 @@ class AudioPeakDetector:
         min_threshold: float = 0.03,
         peak_multiplier: float = 4.0,
         cooldown_seconds: float = 0.18,
-        recent_window_seconds: float = 0.20,
+        recent_window_seconds: float = 0.12,
         max_noise_history: int = 80,
     ):
         self.sample_rate = sample_rate
@@ -58,6 +54,9 @@ class AudioPeakDetector:
         self.last_rms = 0.0
         self.current_threshold = min_threshold
         self.noise_floor = 0.0
+
+        self.peak_counter = 0
+        self.last_consumed_peak_counter = 0
 
         self.lock = threading.Lock()
         self.stream: sd.InputStream | None = None
@@ -83,10 +82,20 @@ class AudioPeakDetector:
         if status:
             print("Audio status:", status)
 
+        callback_time = time.perf_counter()
+
         audio = indata[:, 0]
+        abs_audio = np.abs(audio)
 
         rms = float(np.sqrt(np.mean(audio ** 2)))
-        peak = float(np.max(np.abs(audio)))
+        peak = float(np.max(abs_audio))
+        peak_index = int(np.argmax(abs_audio))
+
+        # Approximate when the peak happened inside this audio block.
+        # The callback happens after a block is available, so the peak may have
+        # happened slightly before callback_time.
+        seconds_from_peak_to_block_end = (len(audio) - 1 - peak_index) / self.sample_rate
+        estimated_peak_time = callback_time - seconds_from_peak_to_block_end
 
         with self.lock:
             if self.noise_history:
@@ -99,19 +108,16 @@ class AudioPeakDetector:
                 noise_floor * self.peak_multiplier,
             )
 
-            now = time.time()
-
             is_peak = (
                 peak > threshold
-                and now - self.last_peak_time > self.cooldown_seconds
+                and estimated_peak_time - self.last_peak_time > self.cooldown_seconds
             )
 
             if is_peak:
-                self.last_peak_time = now
+                self.last_peak_time = estimated_peak_time
                 self.last_peak_value = peak
+                self.peak_counter += 1
             else:
-                # Only update background noise on non-peak frames.
-                # This prevents tap peaks from raising the threshold.
                 self.noise_history.append(rms)
 
                 if len(self.noise_history) > self.max_noise_history:
@@ -121,16 +127,30 @@ class AudioPeakDetector:
             self.current_threshold = threshold
             self.noise_floor = noise_floor
 
+    def consume_peak(self) -> tuple[bool, float, float]:
+        """
+        Return one new peak event if it has not been consumed yet.
+
+        Returns:
+            has_new_peak, peak_time, peak_value
+        """
+        with self.lock:
+            if self.peak_counter == self.last_consumed_peak_counter:
+                return False, 0.0, 0.0
+
+            self.last_consumed_peak_counter = self.peak_counter
+            return True, self.last_peak_time, self.last_peak_value
+
     def has_recent_peak(self, window_seconds: float | None = None) -> bool:
         if window_seconds is None:
             window_seconds = self.recent_window_seconds
 
         with self.lock:
-            return time.time() - self.last_peak_time <= window_seconds
+            return time.perf_counter() - self.last_peak_time <= window_seconds
 
     def get_status(self) -> AudioStatus:
         with self.lock:
-            seconds_since_last_peak = time.time() - self.last_peak_time
+            seconds_since_last_peak = time.perf_counter() - self.last_peak_time
 
             return AudioStatus(
                 recent_peak=seconds_since_last_peak <= self.recent_window_seconds,
@@ -139,29 +159,16 @@ class AudioPeakDetector:
                 threshold=self.current_threshold,
                 noise_floor=self.noise_floor,
                 seconds_since_last_peak=seconds_since_last_peak,
+                peak_counter=self.peak_counter,
             )
 
 
 class TapStateMachine:
     """
-    Confirm a key press using visual key candidate + audio peak.
+    Kept for compatibility with earlier demos.
 
-    Input:
-        key_label:
-            current visual candidate key, such as "A", "B", "1", or None
-
-        audio_recent:
-            whether an audio tap peak happened recently
-
-    Output:
-        confirmed key label if a tap is confirmed
-        None otherwise
-
-    State flow:
-        IDLE
-        → HOVER
-        → WAIT_RELEASE
-        → IDLE
+    The latest live_candidate_record_demo.py no longer relies on this as the
+    main tap decision logic. It uses audio peak time + visual history instead.
     """
 
     def __init__(
