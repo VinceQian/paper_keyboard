@@ -13,6 +13,7 @@ from audio.tap_detector import AudioPeakDetector, TapStateMachine
 from core.candidate import CandidateDetector
 from core.layout import KeyboardLayout
 from core.recorder import DemoRecorder
+from output.keyboard_output import KeyboardOutput
 from vision.board_tracker import BoardTracker
 from vision.camera import CameraSource
 from vision.hand_tracker import HandTracker
@@ -23,50 +24,98 @@ from vision.hand_tracker import HandTracker
 # 你平时要调参数，主要改这里，不需要命令行传参。
 # ============================================================
 
-# Layout and model files
+# ----------------------------
+# File paths
+# ----------------------------
+
 LAYOUT_PATH = PROJECT_ROOT / "data" / "layouts" / "keyboard_full_v1.json"
 HAND_MODEL_PATH = PROJECT_ROOT / "models" / "hand_landmarker.task"
 OUTPUT_DIR = PROJECT_ROOT / "data" / "recorded"
 
+# RECORD_NAME = None 时自动生成 session_xxx.json
+RECORD_NAME = None
+
+
+# ----------------------------
 # Camera settings
-CAMERA_INDEX = 1
+# ----------------------------
+
+CAMERA_INDEX = 2
 CAMERA_WIDTH = 1280
 CAMERA_HEIGHT = 720
 CAMERA_FPS = 30
+
+# 如果画面是镜像的，可以改成 True。
+# 注意：如果开启镜像，ArUco 和坐标映射也会跟着镜像，需要实际测试。
 FLIP_CAMERA = False
 
+
+# ----------------------------
 # Board tracking settings
+# ----------------------------
+
 # 至少看到多少个 marker 才更新纸面校准。
 # 如果看不到足够 marker，会继续使用 last good homography。
 MIN_MARKERS_TO_UPDATE = 2
+
+# RANSAC 的重投影阈值。一般不用改。
 RANSAC_REPROJ_THRESHOLD = 3.0
 
+
+# ----------------------------
 # Candidate detection settings
+# ----------------------------
+
 # 缩小实际按键判定区域，单位 mm。
 # 0 表示使用完整按键矩形。
+# 如果误触边缘很多，可以尝试 SHRINK_X_MM = 1.0, SHRINK_Y_MM = 2.0
 SHRINK_X_MM = 0.0
 SHRINK_Y_MM = 0.0
 
+
+# ----------------------------
 # Audio tap detection settings
-# AUDIO_WINDOW_SECONDS:
+# ----------------------------
+
 # 敲击声音出现后，在多长时间内认为 audio_recent=True。
 # 线上演示如果慢慢按，可以先用 0.18~0.20。
 AUDIO_WINDOW_SECONDS = 0.20
+
+# 音频峰值检测参数。
+# 环境很吵时可以提高 AUDIO_MIN_THRESHOLD 或 AUDIO_PEAK_MULTIPLIER。
 AUDIO_MIN_THRESHOLD = 0.03
 AUDIO_PEAK_MULTIPLIER = 4.0
+
+# 音频 cooldown，防止一次敲击声被检测成多次 peak。
 AUDIO_COOLDOWN_SECONDS = 0.18
 
+
+# ----------------------------
 # Tap state settings
-# STABLE_FRAMES:
+# ----------------------------
+
 # 当前 key 连续稳定多少帧后，才允许音频确认。
-# RELEASE_FRAMES:
-# 手指离开按键区域多少帧后，才允许下一次 tap。
 STABLE_FRAMES = 2
+
+# 手指离开按键区域多少帧后，才允许下一次 tap。
 RELEASE_FRAMES = 2
 
-# Recording settings
-# RECORD_NAME = None 会自动生成 session_xxx.json
-RECORD_NAME = None
+
+# ----------------------------
+# System keyboard output settings
+# ----------------------------
+
+# 默认是否启用真实系统键盘输入。
+# 建议默认 False，避免测试时乱打字。
+ENABLE_SYSTEM_KEYBOARD_OUTPUT = False
+
+# 是否把字母输出成大写。
+# False 更像正常键盘输入：label A 输出为 "a"
+# True 会输出 "A"
+OUTPUT_UPPERCASE_LETTERS = False
+
+# 每次模拟按键后的短暂停顿，避免系统丢输入。
+KEYBOARD_OUTPUT_INTERVAL_SECONDS = 0.02
 
 
 def main() -> None:
@@ -111,6 +160,12 @@ def main() -> None:
         release_frames=RELEASE_FRAMES,
     )
 
+    keyboard_output = KeyboardOutput(
+        enabled=ENABLE_SYSTEM_KEYBOARD_OUTPUT,
+        press_interval_seconds=KEYBOARD_OUTPUT_INTERVAL_SECONDS,
+        uppercase_letters=OUTPUT_UPPERCASE_LETTERS,
+    )
+
     recorder = DemoRecorder(
         output_dir=OUTPUT_DIR,
         layout_id=layout.layout_id,
@@ -118,7 +173,7 @@ def main() -> None:
         notes=(
             "Direct tap detection demo. "
             "Uses current visual candidate + recent audio peak. "
-            "No history buffer or motion-based tap selection."
+            "System keyboard output can be toggled by pressing o."
         ),
     )
 
@@ -138,11 +193,18 @@ def main() -> None:
     print(f"- release frames: {RELEASE_FRAMES}")
     print(f"- hitbox shrink: x={SHRINK_X_MM}mm, y={SHRINK_Y_MM}mm")
     print()
+    print("System keyboard output:")
+    print(f"- enabled: {keyboard_output.enabled}")
+    print(f"- available: {keyboard_output.available}")
+    if keyboard_output.error_message:
+        print(f"- error: {keyboard_output.error_message}")
+    print()
     print("Controls:")
     print("- q: quit")
     print("- r: reset board calibration")
     print("- c: clear output text and tap state")
     print("- space: toggle event recording")
+    print("- o: toggle system keyboard output")
     print("- s: save recording")
     print()
 
@@ -152,6 +214,7 @@ def main() -> None:
     output_text = ""
     last_tap_event = None
     last_tap_time = 0.0
+    last_system_output_sent = False
 
     start_perf_time = time.perf_counter()
     prev_perf_time = time.perf_counter()
@@ -226,9 +289,20 @@ def main() -> None:
                 last_tap_event = tap_event
                 last_tap_time = time.perf_counter()
 
-                print("Tap:", tap_event, "| Output:", output_text)
+                last_system_output_sent = keyboard_output.type_label(tap_event)
+
+                print(
+                    "Tap:",
+                    tap_event,
+                    "| Output:",
+                    output_text,
+                    "| System output:",
+                    last_system_output_sent,
+                )
 
                 if recording_enabled:
+                    keyboard_output_status = keyboard_output.get_status()
+
                     recorder.add_frame(
                         frame_id=camera_frame.frame_id,
                         timestamp=camera_frame.timestamp,
@@ -253,6 +327,11 @@ def main() -> None:
                             "release_frames": RELEASE_FRAMES,
                             "shrink_x": SHRINK_X_MM,
                             "shrink_y": SHRINK_Y_MM,
+                            "keyboard_output_enabled": keyboard_output_status.enabled,
+                            "keyboard_output_available": keyboard_output_status.available,
+                            "keyboard_output_sent": last_system_output_sent,
+                            "keyboard_output_count": keyboard_output_status.output_count,
+                            "keyboard_output_error": keyboard_output_status.error_message,
                         },
                     )
 
@@ -268,6 +347,7 @@ def main() -> None:
             prev_perf_time = now_perf_time
 
             audio_status = audio_detector.get_status()
+            keyboard_output_status = keyboard_output.get_status()
 
             draw_status(
                 output=output,
@@ -284,6 +364,8 @@ def main() -> None:
                 output_text=output_text,
                 last_tap_event=last_tap_event,
                 last_tap_time=last_tap_time,
+                keyboard_output_status=keyboard_output_status,
+                last_system_output_sent=last_system_output_sent,
             )
 
             cv2.imshow("Live Candidate Record Demo - Direct", output)
@@ -301,12 +383,17 @@ def main() -> None:
                 output_text = ""
                 last_tap_event = None
                 last_tap_time = 0.0
+                last_system_output_sent = False
                 tap_machine.reset()
                 print("Output text and tap state cleared.")
 
             if key == ord(" "):
                 recording_enabled = not recording_enabled
                 print("Recording enabled:", recording_enabled)
+
+            if key == ord("o"):
+                enabled = keyboard_output.toggle_enabled()
+                print("System keyboard output enabled:", enabled)
 
             if key == ord("s"):
                 output_path = recorder.save(RECORD_NAME)
@@ -340,6 +427,8 @@ def draw_status(
     output_text,
     last_tap_event,
     last_tap_time,
+    keyboard_output_status,
+    last_system_output_sent,
 ) -> None:
     if not board_result.calibrated:
         calib_text = (
@@ -494,10 +583,50 @@ def draw_status(
         cv2.LINE_AA,
     )
 
+    keyboard_color = (
+        (0, 255, 0)
+        if keyboard_output_status.enabled and keyboard_output_status.available
+        else (180, 180, 180)
+    )
+
+    keyboard_text = (
+        f"System keyboard: {keyboard_output_status.enabled} | "
+        f"available={keyboard_output_status.available} | "
+        f"sent={keyboard_output_status.output_count} | "
+        f"last_sent={last_system_output_sent}"
+    )
+
+    cv2.putText(
+        output,
+        keyboard_text,
+        (20, 460),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.62,
+        keyboard_color,
+        2,
+        cv2.LINE_AA,
+    )
+
+    if keyboard_output_status.error_message:
+        cv2.putText(
+            output,
+            "Keyboard output error. Check terminal / macOS Accessibility permission.",
+            (20, 500),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.55,
+            (0, 0, 255),
+            2,
+            cv2.LINE_AA,
+        )
+
+        fps_y = 540
+    else:
+        fps_y = 500
+
     cv2.putText(
         output,
         f"FPS: {fps:.1f}",
-        (20, 460),
+        (20, fps_y),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.65,
         (255, 0, 0),
