@@ -1,0 +1,105 @@
+{
+  "schema_version": "paper_keyboard_session_v1",
+  "layout_id": "keyboard_full_v1",
+  "time_unit": "seconds",
+  "frames": [
+    {
+      "frame_id": 293,
+      "t": 20.141,
+      "fingers": [
+        {
+          "id": "index",
+          "x": 198.24,
+          "y": 111.3
+        }
+      ],
+      "tap": {
+        "audio": true
+      }
+    },
+    {
+      "frame_id": 322,
+      "t": 22.071,
+      "fingers": [
+        {
+          "id": "index",
+          "x": 227.35,
+          "y": 113.34
+        }
+      ],
+      "tap": {
+        "audio": true
+      }
+    },
+    {
+      "frame_id": 396,
+      "t": 27.039,
+      "fingers": [
+        {
+          "id": "index",
+          "x": 244.23,
+          "y": 106.89
+        }
+      ],
+      "tap": {
+        "audio": true
+      }
+    },
+    {
+      "frame_id": 664,
+      "t": 44.908,
+      "fingers": [
+        {
+          "id": "index",
+          "x": 172.87,
+          "y": 108.0
+        }
+      ],
+      "tap": {
+        "audio": true
+      }
+    },
+    {
+      "frame_id": 689,
+      "t": 46.575,
+      "fingers": [
+        {
+          "id": "index",
+          "x": 147.35,
+          "y": 107.78
+        }
+      ],
+      "tap": {
+        "audio": true
+      }
+    },
+    {
+      "frame_id": 712,
+      "t": 48.11,
+      "fingers": [
+        {
+          "id": "index",
+          "x": 183.0,
+          "y": 75.19
+        }
+      ],
+      "tap": {
+        "audio": true
+      }
+    },
+    {
+      "frame_id": 735,
+      "t": 49.646,
+      "fingers": [
+        {
+          "id": "index",
+          "x": 162.05,
+          "y": 73.38
+        }
+      ],
+      "tap": {
+        "audio": true
+      }
+    }
+  ]
+}
