@@ -1,0 +1,73 @@
+{
+  "schema_version": "paper_keyboard_session_v1",
+  "layout_id": "keyboard_number_v2",
+  "time_unit": "seconds",
+  "frames": [
+    {
+      "frame_id": 1,
+      "t": 0.000,
+      "fingers": [{"id": "index", "x": 70, "y": 74}],
+      "tap": {"audio": false}
+    },
+    {
+      "frame_id": 2,
+      "t": 0.033,
+      "fingers": [{"id": "index", "x": 71, "y": 75}],
+      "tap": {"audio": true}
+    },
+    {
+      "frame_id": 3,
+      "t": 0.066,
+      "fingers": [{"id": "index", "x": 72, "y": 75}],
+      "tap": {"audio": true}
+    },
+    {
+      "frame_id": 4,
+      "t": 0.099,
+      "fingers": [{"id": "index", "x": 72, "y": 76}],
+      "tap": {"audio": false}
+    },
+    {
+      "frame_id": 5,
+      "t": 0.300,
+      "fingers": [{"id": "index", "x": 144, "y": 75}],
+      "tap": {"audio": false}
+    },
+    {
+      "frame_id": 6,
+      "t": 0.333,
+      "fingers": [{"id": "index", "x": 145, "y": 75}],
+      "tap": {"audio": true}
+    },
+    {
+      "frame_id": 7,
+      "t": 0.366,
+      "fingers": [{"id": "index", "x": 146, "y": 75}],
+      "tap": {"audio": false}
+    },
+    {
+      "frame_id": 8,
+      "t": 0.600,
+      "fingers": [{"id": "index", "x": 178, "y": 115}],
+      "tap": {"audio": false}
+    },
+    {
+      "frame_id": 9,
+      "t": 0.633,
+      "fingers": [{"id": "index", "x": 179, "y": 115}],
+      "tap": {"audio": true}
+    },
+    {
+      "frame_id": 10,
+      "t": 0.666,
+      "fingers": [{"id": "index", "x": 180, "y": 115}],
+      "tap": {"audio": true}
+    },
+    {
+      "frame_id": 11,
+      "t": 0.699,
+      "fingers": [{"id": "index", "x": 180, "y": 115}],
+      "tap": {"audio": false}
+    }
+  ]
+}

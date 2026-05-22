@@ -1,0 +1,25 @@
+{
+  "schema_version": "paper_keyboard_session_v1",
+  "layout_id": "keyboard_number_v2",
+  "time_unit": "seconds",
+  "frames": [
+    {
+      "frame_id": 1,
+      "t": 0.000,
+      "fingers": [{"id": "index", "x": 72, "y": 75}],
+      "tap": {"audio": true}
+    },
+    {
+      "frame_id": 2,
+      "t": 0.500,
+      "fingers": [{"id": "index", "x": 145, "y": 75}],
+      "tap": {"audio": true}
+    },
+    {
+      "frame_id": 3,
+      "t": 1.000,
+      "fingers": [{"id": "index", "x": 178, "y": 115}],
+      "tap": {"audio": true}
+    }
+  ]
+}
