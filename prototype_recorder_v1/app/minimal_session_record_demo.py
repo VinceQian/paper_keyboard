@@ -28,7 +28,7 @@ from vision.hand_tracker import HandTracker
 # File paths
 # ----------------------------
 
-LAYOUT_PATH = PROJECT_ROOT / "data" / "layouts" / "keyboard_full_v1.json"
+LAYOUT_PATH = PROJECT_ROOT / "data" / "layouts" / "layout.json"
 HAND_MODEL_PATH = PROJECT_ROOT / "models" / "hand_landmarker.task"
 SESSION_OUTPUT_DIR = PROJECT_ROOT / "data" / "sessions"
 

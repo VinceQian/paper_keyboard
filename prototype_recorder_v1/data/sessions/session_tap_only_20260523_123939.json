@@ -1,0 +1,63 @@
+{
+  "schema_version": "paper_keyboard_session_v1",
+  "layout_id": "layout",
+  "time_unit": "seconds",
+  "frames": [
+    {
+      "frame_id": 460,
+      "t": 30.754,
+      "fingers": [
+        {
+          "id": "index",
+          "x": 243.3,
+          "y": 83.47
+        }
+      ],
+      "tap": {
+        "audio": true
+      }
+    },
+    {
+      "frame_id": 526,
+      "t": 35.155,
+      "fingers": [
+        {
+          "id": "index",
+          "x": 195.92,
+          "y": 83.56
+        }
+      ],
+      "tap": {
+        "audio": true
+      }
+    },
+    {
+      "frame_id": 684,
+      "t": 45.689,
+      "fingers": [
+        {
+          "id": "index",
+          "x": 237.97,
+          "y": 133.3
+        }
+      ],
+      "tap": {
+        "audio": true
+      }
+    },
+    {
+      "frame_id": 723,
+      "t": 48.291,
+      "fingers": [
+        {
+          "id": "index",
+          "x": 192.55,
+          "y": 135.78
+        }
+      ],
+      "tap": {
+        "audio": true
+      }
+    }
+  ]
+}

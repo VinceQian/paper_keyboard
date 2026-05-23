@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ins.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<p>对，按这 6 块来就清楚了。下面是可以直接带学生一步步做的版本。</p>
+<hr>
+<h1 id="1-vscode-安装选项与打开后配置">1. VSCode 安装选项与打开后配置</h1>
+<h2 id="安装版本">安装版本</h2>
+<p>让学生下载：</p>
+<pre class="hljs"><code><div>Visual Studio Code User Installer
+</div></code></pre>
+<p>Windows 官方文档也推荐普通用户用 User setup，因为不需要管理员权限，更新也更顺。(<a href="https://code.visualstudio.com/docs/setup/windows" title="Installing Visual Studio Code on Windows">Visual Studio Code</a>)</p>
+<h2 id="windows-安装时勾选项">Windows 安装时勾选项</h2>
+<p>安装到这一步：<code>Select Additional Tasks</code></p>
+<p>建议勾选：</p>
+<pre class="hljs"><code><div>Create a desktop icon
+Add &quot;Open with Code&quot; action to Windows Explorer file context menu
+Add &quot;Open with Code&quot; action to Windows Explorer directory context menu
+Register Code as an editor for supported file types
+Add to PATH
+</div></code></pre>
+<p>重点解释：</p>
+<pre class="hljs"><code><div>Create a desktop icon：
+桌面生成 VSCode 图标，方便学生打开。
+
+Open with Code：
+以后可以右键文件夹，用 VSCode 打开项目。
+
+Register Code as an editor：
+让 .py、.md 这类文件可以默认用 VSCode 打开。
+
+Add to PATH：
+以后可以在终端里用 code 命令打开 VSCode。
+</div></code></pre>
+<p>如果学生不懂，不需要解释太多，直接说：</p>
+<pre class="hljs"><code><div>这一页能勾的基本都勾上，尤其是 Add to PATH 和 Open with Code。
+</div></code></pre>
+<h2 id="mac-安装">Mac 安装</h2>
+<p>Mac 一般没有这些安装选项。</p>
+<p>步骤：</p>
+<pre class="hljs"><code><div>1. 下载 VSCode
+2. 打开下载好的 zip / dmg
+3. 把 Visual Studio Code 拖进 Applications / 应用程序
+4. 从 Applications 里打开 VSCode
+</div></code></pre>
+<p>重点提醒：</p>
+<pre class="hljs"><code><div>不要一直在下载文件夹里运行 VSCode，要拖到 Applications 里。
+</div></code></pre>
+<h2 id="vscode-打开后的配置">VSCode 打开后的配置</h2>
+<p>第一次打开后，只做这些，不要装一堆东西：</p>
+<pre class="hljs"><code><div>1. 选择主题：随便，学生喜欢就行
+2. 安装 Python 扩展
+3. 确认能打开 Terminal
+</div></code></pre>
+<p>安装 Python 扩展：</p>
+<pre class="hljs"><code><div>左侧 Extensions
+搜索 Python
+安装 Microsoft 发布的 Python 插件
+</div></code></pre>
+<p>解释：</p>
+<pre class="hljs"><code><div>Python 插件不是 Python 本体。
+它只是让 VSCode 更好地识别、运行、提示 Python 代码。
+</div></code></pre>
+<p>打开终端：</p>
+<pre class="hljs"><code><div>顶部菜单 Terminal
+选择 New Terminal
+</div></code></pre>
+<p>让学生知道：</p>
+<pre class="hljs"><code><div>VSCode 下面这个黑色/白色窗口就是终端。
+以后我们会在这里运行 Python 文件。
+</div></code></pre>
+<hr>
+<h1 id="2-python-版本安装选项与配置">2. Python 版本、安装选项与配置</h1>
+<h2 id="用什么版本">用什么版本</h2>
+<p>建议用：</p>
+<pre class="hljs"><code><div>Python 3.12.x
+</div></code></pre>
+<p>原因：</p>
+<pre class="hljs"><code><div>1. 足够新
+2. 兼容性比最新版本更稳
+3. 对初学项目完全够用
+</div></code></pre>
+<p>Python 官网现在首页显示的最新版本是 Python 3.14.5，说明最新稳定版已经到 3.14 系列了。(<a href="https://www.python.org/" title="Welcome to Python.org">Python.org</a>)
+但教学项目没必要追最新，尤其之后可能会装 OpenCV、MediaPipe 等库，用 3.12 更稳。</p>
+<p>如果学生已经装了：</p>
+<pre class="hljs"><code><div>Python 3.11
+Python 3.12
+Python 3.13
+</div></code></pre>
+<p>都可以先用。
+不建议用：</p>
+<pre class="hljs"><code><div>Python 2.x
+Python 3.8 或更老
+</div></code></pre>
+<h2 id="windows-安装选项">Windows 安装选项</h2>
+<p>安装 Python 时，最重要的是第一页：</p>
+<pre class="hljs"><code><div>一定勾选：
+Add python.exe to PATH
+</div></code></pre>
+<p>然后点：</p>
+<pre class="hljs"><code><div>Install Now
+</div></code></pre>
+<p>不要选太复杂的 Customize install，除非你要改路径。</p>
+<p>安装完成后，重新打开 VSCode 的 Terminal，输入：</p>
+<pre class="hljs"><code><div>python --version
+</div></code></pre>
+<p>如果显示类似：</p>
+<pre class="hljs"><code><div>Python 3.12.x
+</div></code></pre>
+<p>就成功。</p>
+<p>如果 <code>python --version</code> 不行，试：</p>
+<pre class="hljs"><code><div>py --version
+</div></code></pre>
+<h2 id="mac-安装-1">Mac 安装</h2>
+<p>Mac 推荐用 Python 官网安装包，不要一开始用 conda / brew，初学者会混乱。</p>
+<p>安装后在 Terminal 输入：</p>
+<pre class="hljs"><code><div>python3 --version
+</div></code></pre>
+<p>如果显示类似：</p>
+<pre class="hljs"><code><div>Python 3.12.x
+</div></code></pre>
+<p>就成功。</p>
+<p>Mac 上运行 Python 通常用：</p>
+<pre class="hljs"><code><div>python3 文件名.py
+</div></code></pre>
+<p>Windows 通常用：</p>
+<pre class="hljs"><code><div>python 文件名.py
+</div></code></pre>
+<p>或者：</p>
+<pre class="hljs"><code><div>py 文件名.py
+</div></code></pre>
+<h2 id="vscode-里选择-python-解释器">VSCode 里选择 Python 解释器</h2>
+<p>安装完 Python 后，在 VSCode 里：</p>
+<pre class="hljs"><code><div>按 Ctrl + Shift + P / Mac 按 Cmd + Shift + P
+输入 Python: Select Interpreter
+选择 Python 3.12.x
+</div></code></pre>
+<p>如果列表里有多个 Python，选：</p>
+<pre class="hljs"><code><div>Python 3.12.x
+</div></code></pre>
+<p>不要选奇怪的 conda、base、Microsoft Store 之类，除非你明确知道它能用。</p>
+<hr>
+<h1 id="3-hello-world-环节">3. Hello World 环节</h1>
+<p>目标：</p>
+<pre class="hljs"><code><div>确认 VSCode + Python 都能正常工作。
+</div></code></pre>
+<h2 id="创建课程文件夹">创建课程文件夹</h2>
+<p>让学生在桌面或文档里建一个文件夹：</p>
+<pre class="hljs"><code><div>paper_keyboard_course
+</div></code></pre>
+<p>然后在 VSCode 里：</p>
+<pre class="hljs"><code><div>File
+Open Folder
+选择 paper_keyboard_course
+</div></code></pre>
+<p>如果弹出信任提示：</p>
+<pre class="hljs"><code><div>Do you trust the authors of the files in this folder?
+</div></code></pre>
+<p>选择：</p>
+<pre class="hljs"><code><div>Yes, I trust the authors
+</div></code></pre>
+<h2 id="新建-hellopy">新建 hello.py</h2>
+<p>在 VSCode 左侧新建文件：</p>
+<pre class="hljs"><code><div>hello.py
+</div></code></pre>
+<p>写入：</p>
+<pre class="hljs"><code><div><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Hello, Paper Keyboard!&quot;</span>)
+</div></code></pre>
+<h2 id="运行">运行</h2>
+<p>Windows 终端输入：</p>
+<pre class="hljs"><code><div>python hello.py
+</div></code></pre>
+<p>如果不行：</p>
+<pre class="hljs"><code><div>py hello.py
+</div></code></pre>
+<p>Mac 终端输入：</p>
+<pre class="hljs"><code><div>python3 hello.py
+</div></code></pre>
+<p>看到：</p>
+<pre class="hljs"><code><div>Hello, Paper Keyboard!
+</div></code></pre>
+<p>就算成功。</p>
+<p>你可以告诉学生：</p>
+<pre class="hljs"><code><div>到这里为止，我们已经完成了最小开发环境：
+能写 Python 文件，也能运行 Python 文件。
+</div></code></pre>
+<hr>
+<h1 id="4-项目目录结构带解释">4. 项目目录结构带解释</h1>
+<p>Hello World 跑通后，如果有时间，就开始建目录。</p>
+<p>最终目录：</p>
+<pre class="hljs"><code><div>paper_keyboard_course/
+  hello.py
+  app/
+  core/
+  data/
+    layouts/
+    sessions/
+  logs/
+  scratch/
+</div></code></pre>
+<p>解释：</p>
+<pre class="hljs"><code><div>hello.py：
+今天测试环境用的文件，后面可以保留，也可以不管。
+
+app/：
+放可以直接运行的程序。
+比如之后的 replay_session_demo.py。
+
+core/：
+放核心逻辑。
+比如之后的 input_engine.py。
+
+data/：
+放数据文件。
+
+data/layouts/：
+放键盘布局文件。
+比如 keyboard_number_v2.json。
+
+data/sessions/：
+放输入过程记录文件。
+比如 example_session.json。
+
+logs/：
+放每节课的项目日志。
+比如 lesson_01_project_log.md。
+
+scratch/：
+放课堂练习、临时代码。
+这里的代码不一定是正式项目代码。
+</div></code></pre>
+<h2 id="用-vscode-创建">用 VSCode 创建</h2>
+<p>建议初学者先用 VSCode 左侧文件树右键创建：</p>
+<pre class="hljs"><code><div>New Folder
+New File
+</div></code></pre>
+<p>不用一开始强迫终端。</p>
+<h2 id="如果要用终端创建">如果要用终端创建</h2>
+<p>Windows：</p>
+<pre class="hljs"><code><div><span class="hljs-built_in">mkdir</span> app
+<span class="hljs-built_in">mkdir</span> core
+<span class="hljs-built_in">mkdir</span> data
+<span class="hljs-built_in">mkdir</span> logs
+<span class="hljs-built_in">mkdir</span> scratch
+<span class="hljs-built_in">mkdir</span> data\layouts
+<span class="hljs-built_in">mkdir</span> data\sessions
+</div></code></pre>
+<p>Mac：</p>
+<pre class="hljs"><code><div><span class="hljs-built_in">mkdir</span> app
+<span class="hljs-built_in">mkdir</span> core
+<span class="hljs-built_in">mkdir</span> data
+<span class="hljs-built_in">mkdir</span> logs
+<span class="hljs-built_in">mkdir</span> scratch
+<span class="hljs-built_in">mkdir</span> data/layouts
+<span class="hljs-built_in">mkdir</span> data/sessions
+</div></code></pre>
+<p>你可以简单解释：</p>
+<pre class="hljs"><code><div>mkdir 就是创建文件夹。
+</div></code></pre>
+<p>不要讲太多命令行。</p>
+<hr>
+<h1 id="5-项目日志结构">5. 项目日志结构</h1>
+<p>在 <code>logs/</code> 里新建：</p>
+<pre class="hljs"><code><div>lesson_01_project_log.md
+</div></code></pre>
+<p>内容可以直接让学生复制这个：</p>
+<pre class="hljs"><code><div># 第 1 节项目日志：环境配置与项目整体理解
+
+## 1. 今天完成了什么？
+
+今天我完成了：
+
+- 安装或确认 VSCode
+- 安装或确认 Python
+- 成功运行 hello.py
+- 了解 Paper Keyboard 项目的基本目标
+- 了解 session、layout、InputEngine 的作用
+- 创建项目目录结构
+
+## 2. Hello World 运行结果
+
+我运行的文件是：
+
+我的运行命令是：
+
+程序输出结果是：
+
+## 3. 这个项目最终想实现什么？
+
+我的回答：
+
+## 4. 摄像头、麦克风、InputEngine 分别负责什么？
+
+摄像头：
+
+麦克风：
+
+InputEngine：
+
+## 5. session JSON 和 layout JSON 分别记录什么？
+
+session JSON：
+
+layout JSON：
+
+## 6. 当前版本为什么先假设 finger_id = 1？
+
+我的回答：
+
+## 7. 今天我还不太明白的问题
+
+问题 1：
+
+问题 2：
+
+问题 3：
+</div></code></pre>
+<p>课堂上可以带他填这些：</p>
+<pre class="hljs"><code><div>第 1 部分：今天完成了什么
+第 2 部分：Hello World 运行结果
+第 3 部分：项目最终想实现什么
+</div></code></pre>
+<p>其他部分课后补。</p>
+<hr>
+<h1 id="6-最后的可选小练习">6. 最后的可选小练习</h1>
+<p>如果还有时间，在 <code>scratch/</code> 里新建：</p>
+<pre class="hljs"><code><div>read_frame_demo.py
+</div></code></pre>
+<p>写：</p>
+<pre class="hljs"><code><div>frame = {
+    <span class="hljs-string">&quot;frame_id&quot;</span>: <span class="hljs-number">2</span>,
+    <span class="hljs-string">&quot;t&quot;</span>: <span class="hljs-number">0.033</span>,
+    <span class="hljs-string">&quot;fingers&quot;</span>: [
+        {
+            <span class="hljs-string">&quot;finger_id&quot;</span>: <span class="hljs-number">1</span>,
+            <span class="hljs-string">&quot;x&quot;</span>: <span class="hljs-number">106.0</span>,
+            <span class="hljs-string">&quot;y&quot;</span>: <span class="hljs-number">82.8</span>
+        }
+    ],
+    <span class="hljs-string">&quot;tap&quot;</span>: {
+        <span class="hljs-string">&quot;audio&quot;</span>: <span class="hljs-literal">True</span>
+    }
+}
+
+finger = frame[<span class="hljs-string">&quot;fingers&quot;</span>][<span class="hljs-number">0</span>]
+
+x = finger[<span class="hljs-string">&quot;x&quot;</span>]
+y = finger[<span class="hljs-string">&quot;y&quot;</span>]
+audio = frame[<span class="hljs-string">&quot;tap&quot;</span>][<span class="hljs-string">&quot;audio&quot;</span>]
+
+<span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;x =&quot;</span>, x)
+<span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;y =&quot;</span>, y)
+<span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;audio =&quot;</span>, audio)
+</div></code></pre>
+<p>运行：</p>
+<p>Windows：</p>
+<pre class="hljs"><code><div>python scratch/read_frame_demo.py
+</div></code></pre>
+<p>或者：</p>
+<pre class="hljs"><code><div>py scratch/read_frame_demo.py
+</div></code></pre>
+<p>Mac：</p>
+<pre class="hljs"><code><div>python3 scratch/read_frame_demo.py
+</div></code></pre>
+<p>预期输出：</p>
+<pre class="hljs"><code><div>x = 106.0
+y = 82.8
+audio = True
+</div></code></pre>
+<p>然后做三个小改动：</p>
+<pre class="hljs"><code><div>1. 把 x 改成 50，再运行
+2. 把 y 改成 30，再运行
+3. 把 audio 改成 False，再运行
+</div></code></pre>
+<p>问学生：</p>
+<pre class="hljs"><code><div>x 和 y 表示什么？
+audio=True 表示什么？
+audio=False 表示什么？
+frame[&quot;fingers&quot;][0] 取到的是什么？
+</div></code></pre>
+<p>答案：</p>
+<pre class="hljs"><code><div>x 和 y 表示手指在纸面上的坐标。
+audio=True 表示这一帧检测到了敲击。
+audio=False 表示这一帧没有检测到敲击。
+frame[&quot;fingers&quot;][0] 取到的是这一帧里的第一个手指；当前版本里就是假设的食指。
+</div></code></pre>
+<p>这一节课最低目标就定为：</p>
+<pre class="hljs"><code><div>VSCode 装好
+Python 装好
+Hello World 跑通
+项目目录建好
+项目日志建好
+</div></code></pre>
+<p>小练习是加分项，不是必须完成。</p>
+
+</body>
+</html>

@@ -12,7 +12,7 @@ from core.input_engine import InputEngine
 # =========================
 # 可以让学生修改的常量区
 # =========================
-LAYOUT_PATH = BASE_DIR / "data" / "layouts" / "keyboard_number_v2.json"
+LAYOUT_PATH = BASE_DIR / "data" / "layouts" / "layout.json"
 SESSION_PATH = BASE_DIR / "data" / "sessions" / "example_continuous_session.json"
 
 
