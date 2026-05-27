@@ -1,0 +1,147 @@
+{
+  "session_id": "test_number_input_123",
+  "layout_id": "keyboard_number_v1",
+  "unit": "mm",
+  "frames": [
+    {
+      "frame_id": 1,
+      "t": 0.00,
+      "fingers": [
+        {
+          "finger_id": 1,
+          "x": 25,
+          "y": 25
+        }
+      ],
+      "tap": {
+        "audio": false
+      }
+    },
+    {
+      "frame_id": 2,
+      "t": 0.03,
+      "fingers": [
+        {
+          "finger_id": 1,
+          "x": 25,
+          "y": 25
+        }
+      ],
+      "tap": {
+        "audio": true
+      }
+    },
+    {
+      "frame_id": 3,
+      "t": 0.06,
+      "fingers": [
+        {
+          "finger_id": 1,
+          "x": 25,
+          "y": 25
+        }
+      ],
+      "tap": {
+        "audio": true
+      }
+    },
+    {
+      "frame_id": 4,
+      "t": 0.09,
+      "fingers": [
+        {
+          "finger_id": 1,
+          "x": 25,
+          "y": 25
+        }
+      ],
+      "tap": {
+        "audio": false
+      }
+    },
+    {
+      "frame_id": 5,
+      "t": 0.12,
+      "fingers": [
+        {
+          "finger_id": 1,
+          "x": 50,
+          "y": 25
+        }
+      ],
+      "tap": {
+        "audio": false
+      }
+    },
+    {
+      "frame_id": 6,
+      "t": 0.15,
+      "fingers": [
+        {
+          "finger_id": 1,
+          "x": 50,
+          "y": 25
+        }
+      ],
+      "tap": {
+        "audio": true
+      }
+    },
+    {
+      "frame_id": 7,
+      "t": 0.18,
+      "fingers": [
+        {
+          "finger_id": 1,
+          "x": 50,
+          "y": 25
+        }
+      ],
+      "tap": {
+        "audio": false
+      }
+    },
+    {
+      "frame_id": 8,
+      "t": 0.21,
+      "fingers": [
+        {
+          "finger_id": 1,
+          "x": 75,
+          "y": 25
+        }
+      ],
+      "tap": {
+        "audio": false
+      }
+    },
+    {
+      "frame_id": 9,
+      "t": 0.24,
+      "fingers": [
+        {
+          "finger_id": 1,
+          "x": 75,
+          "y": 25
+        }
+      ],
+      "tap": {
+        "audio": true
+      }
+    },
+    {
+      "frame_id": 10,
+      "t": 0.27,
+      "fingers": [
+        {
+          "finger_id": 1,
+          "x": 75,
+          "y": 25
+        }
+      ],
+      "tap": {
+        "audio": false
+      }
+    }
+  ]
+}

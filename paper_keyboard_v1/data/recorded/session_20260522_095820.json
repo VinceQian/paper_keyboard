@@ -1,0 +1,327 @@
+{
+  "session": {
+    "session_id": "session_20260522_095820",
+    "created_at": "2026-05-22T01:58:20.288312+00:00",
+    "source": "live_candidate_record_demo_direct",
+    "layout_id": "keyboard_full_v1",
+    "notes": "Direct tap detection demo. Uses current visual candidate + recent audio peak. System keyboard output can be toggled by pressing o."
+  },
+  "frames": [
+    {
+      "frame_id": 2116,
+      "timestamp": 141.987929,
+      "fingers": [
+        {
+          "id": "left_index",
+          "x": 43.518001556396484,
+          "y": 81.93359375,
+          "image_x": 1022,
+          "image_y": 544,
+          "confidence": 1.0
+        }
+      ],
+      "candidates": [
+        {
+          "finger_id": "left_index",
+          "key_id": "Q",
+          "label": "Q",
+          "x": 43.518001556396484,
+          "y": 81.93359375,
+          "score": 1.0
+        }
+      ],
+      "audio_peak": true,
+      "side_contacts": [],
+      "image_path": null,
+      "debug": {
+        "event_type": "confirmed_tap",
+        "tap_event": "Q",
+        "output_text": "QQQQAA1Q",
+        "mode": "direct_current_key",
+        "tap_state": "WAIT_RELEASE",
+        "audio_recent": true,
+        "audio_status": {
+          "recent_peak": false,
+          "last_peak_value": 0.042664993554353714,
+          "last_rms": 0.0037984419614076614,
+          "threshold": 0.03,
+          "noise_floor": 0.002282332628965378,
+          "seconds_since_last_peak": 0.20338649999757763,
+          "peak_counter": 41
+        },
+        "board_calibrated": true,
+        "board_updated": true,
+        "visible_marker_count": 4,
+        "used_marker_ids": [
+          4,
+          5,
+          7,
+          6
+        ],
+        "current_key_label": "Q",
+        "audio_window": 0.2,
+        "stable_frames": 2,
+        "release_frames": 2,
+        "shrink_x": 0.0,
+        "shrink_y": 0.0,
+        "keyboard_output_enabled": true,
+        "keyboard_output_available": true,
+        "keyboard_output_sent": true,
+        "keyboard_output_count": 7,
+        "keyboard_output_error": null
+      }
+    },
+    {
+      "frame_id": 2191,
+      "timestamp": 147.022302,
+      "fingers": [
+        {
+          "id": "left_index",
+          "x": 116.17662048339844,
+          "y": 126.2982406616211,
+          "image_x": 745,
+          "image_y": 443,
+          "confidence": 1.0
+        }
+      ],
+      "candidates": [
+        {
+          "finger_id": "left_index",
+          "key_id": "C",
+          "label": "C",
+          "x": 116.17662048339844,
+          "y": 126.2982406616211,
+          "score": 1.0
+        }
+      ],
+      "audio_peak": true,
+      "side_contacts": [],
+      "image_path": null,
+      "debug": {
+        "event_type": "confirmed_tap",
+        "tap_event": "C",
+        "output_text": "QQQQAA1QC",
+        "mode": "direct_current_key",
+        "tap_state": "WAIT_RELEASE",
+        "audio_recent": true,
+        "audio_status": {
+          "recent_peak": true,
+          "last_peak_value": 0.06018421798944473,
+          "last_rms": 0.022046877071261406,
+          "threshold": 0.03,
+          "noise_floor": 0.00211163773201406,
+          "seconds_since_last_peak": 0.10024404100840911,
+          "peak_counter": 44
+        },
+        "board_calibrated": true,
+        "board_updated": true,
+        "visible_marker_count": 3,
+        "used_marker_ids": [
+          4,
+          5,
+          7
+        ],
+        "current_key_label": "C",
+        "audio_window": 0.2,
+        "stable_frames": 2,
+        "release_frames": 2,
+        "shrink_x": 0.0,
+        "shrink_y": 0.0,
+        "keyboard_output_enabled": true,
+        "keyboard_output_available": true,
+        "keyboard_output_sent": true,
+        "keyboard_output_count": 8,
+        "keyboard_output_error": null
+      }
+    },
+    {
+      "frame_id": 2207,
+      "timestamp": 148.115164,
+      "fingers": [
+        {
+          "id": "left_index",
+          "x": 120.6171646118164,
+          "y": 143.21263122558594,
+          "image_x": 727,
+          "image_y": 410,
+          "confidence": 1.0
+        }
+      ],
+      "candidates": [
+        {
+          "finger_id": "left_index",
+          "key_id": "C",
+          "label": "C",
+          "x": 120.6171646118164,
+          "y": 143.21263122558594,
+          "score": 1.0
+        }
+      ],
+      "audio_peak": true,
+      "side_contacts": [],
+      "image_path": null,
+      "debug": {
+        "event_type": "confirmed_tap",
+        "tap_event": "C",
+        "output_text": "QQQQAA1QCC",
+        "mode": "direct_current_key",
+        "tap_state": "WAIT_RELEASE",
+        "audio_recent": true,
+        "audio_status": {
+          "recent_peak": true,
+          "last_peak_value": 0.07753748446702957,
+          "last_rms": 0.00828018132597208,
+          "threshold": 0.03,
+          "noise_floor": 0.002532249316573143,
+          "seconds_since_last_peak": 0.14989820899791084,
+          "peak_counter": 45
+        },
+        "board_calibrated": true,
+        "board_updated": true,
+        "visible_marker_count": 3,
+        "used_marker_ids": [
+          4,
+          5,
+          7
+        ],
+        "current_key_label": "C",
+        "audio_window": 0.2,
+        "stable_frames": 2,
+        "release_frames": 2,
+        "shrink_x": 0.0,
+        "shrink_y": 0.0,
+        "keyboard_output_enabled": true,
+        "keyboard_output_available": true,
+        "keyboard_output_sent": true,
+        "keyboard_output_count": 9,
+        "keyboard_output_error": null
+      }
+    },
+    {
+      "frame_id": 2233,
+      "timestamp": 149.853769,
+      "fingers": [
+        {
+          "id": "left_index",
+          "x": 120.38184356689453,
+          "y": 115.02738189697266,
+          "image_x": 735,
+          "image_y": 466,
+          "confidence": 1.0
+        }
+      ],
+      "candidates": [
+        {
+          "finger_id": "left_index",
+          "key_id": "F",
+          "label": "F",
+          "x": 120.38184356689453,
+          "y": 115.02738189697266,
+          "score": 1.0
+        }
+      ],
+      "audio_peak": true,
+      "side_contacts": [],
+      "image_path": null,
+      "debug": {
+        "event_type": "confirmed_tap",
+        "tap_event": "F",
+        "output_text": "QQQQAA1QCCF",
+        "mode": "direct_current_key",
+        "tap_state": "WAIT_RELEASE",
+        "audio_recent": true,
+        "audio_status": {
+          "recent_peak": true,
+          "last_peak_value": 0.03415669500827789,
+          "last_rms": 0.012032737024128437,
+          "threshold": 0.03,
+          "noise_floor": 0.0025117777986451983,
+          "seconds_since_last_peak": 0.11439283299841918,
+          "peak_counter": 46
+        },
+        "board_calibrated": true,
+        "board_updated": true,
+        "visible_marker_count": 3,
+        "used_marker_ids": [
+          4,
+          5,
+          7
+        ],
+        "current_key_label": "F",
+        "audio_window": 0.2,
+        "stable_frames": 2,
+        "release_frames": 2,
+        "shrink_x": 0.0,
+        "shrink_y": 0.0,
+        "keyboard_output_enabled": true,
+        "keyboard_output_available": true,
+        "keyboard_output_sent": true,
+        "keyboard_output_count": 10,
+        "keyboard_output_error": null
+      }
+    },
+    {
+      "frame_id": 2283,
+      "timestamp": 153.254817,
+      "fingers": [
+        {
+          "id": "left_index",
+          "x": 143.971923828125,
+          "y": 145.10208129882812,
+          "image_x": 650,
+          "image_y": 410,
+          "confidence": 1.0
+        }
+      ],
+      "candidates": [
+        {
+          "finger_id": "left_index",
+          "key_id": "V",
+          "label": "V",
+          "x": 143.971923828125,
+          "y": 145.10208129882812,
+          "score": 1.0
+        }
+      ],
+      "audio_peak": true,
+      "side_contacts": [],
+      "image_path": null,
+      "debug": {
+        "event_type": "confirmed_tap",
+        "tap_event": "V",
+        "output_text": "QQQQAA1QCCFV",
+        "mode": "direct_current_key",
+        "tap_state": "WAIT_RELEASE",
+        "audio_recent": true,
+        "audio_status": {
+          "recent_peak": true,
+          "last_peak_value": 0.033551670610904694,
+          "last_rms": 0.008156850002706051,
+          "threshold": 0.03,
+          "noise_floor": 0.0023021496599540114,
+          "seconds_since_last_peak": 0.1560749579948606,
+          "peak_counter": 47
+        },
+        "board_calibrated": true,
+        "board_updated": true,
+        "visible_marker_count": 3,
+        "used_marker_ids": [
+          4,
+          5,
+          7
+        ],
+        "current_key_label": "V",
+        "audio_window": 0.2,
+        "stable_frames": 2,
+        "release_frames": 2,
+        "shrink_x": 0.0,
+        "shrink_y": 0.0,
+        "keyboard_output_enabled": true,
+        "keyboard_output_available": true,
+        "keyboard_output_sent": true,
+        "keyboard_output_count": 11,
+        "keyboard_output_error": null
+      }
+    }
+  ]
+}
