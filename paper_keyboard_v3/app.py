@@ -1,9 +1,10 @@
-from programs.replay_session import main as replay_session_main
-from programs.record_session import main as record_session_main
+# from programs.replay_session import main as current_program_main
+# from programs.record_session import main as current_program_main
+from programs.test_single_finger_mapping import main as current_program_main
+
 
 def main():
-    replay_session_main()
-    # record_session_main()
+    current_program_main()
 
 
 if __name__ == "__main__":
