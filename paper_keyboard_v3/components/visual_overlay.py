@@ -226,13 +226,13 @@ class VisualOverlay:
             )
 
     def draw_text_background(self, image):
-        """给 Text 显示区域加一个半透明背景。"""
+        """给文字显示区域加一个半透明背景。"""
         overlay = image.copy()
 
         cv2.rectangle(
             overlay,
             (10, 10),
-            (520, 60),
+            (520, 90),
             (0, 0, 0),
             -1
         )
@@ -248,8 +248,8 @@ class VisualOverlay:
             image
         )
 
-    def draw_text(self, image, text):
-        """只显示当前已经输入的文本。"""
+    def draw_text(self, image, text, direct_input_enabled=False):
+        """显示当前文本和直接输入状态。"""
         self.draw_text_background(image)
 
         cv2.putText(
@@ -262,7 +262,22 @@ class VisualOverlay:
             2
         )
 
-    def draw_all(self, image, frame, visual_data, current_key_id, text):
+        if direct_input_enabled:
+            direct_input_text = "Direct Input: ON"
+        else:
+            direct_input_text = "Direct Input: OFF"
+
+        cv2.putText(
+            image,
+            direct_input_text,
+            (20, 75),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.75,
+            (0, 255, 0),
+            2
+        )
+
+    def draw_all(self, image, frame, visual_data, current_key_id, text, direct_input_enabled=False):
         """
         画出完整显示画面。
 
@@ -320,7 +335,8 @@ class VisualOverlay:
 
         self.draw_text(
             debug_image,
-            text
+            text,
+            direct_input_enabled
         )
 
         return debug_image

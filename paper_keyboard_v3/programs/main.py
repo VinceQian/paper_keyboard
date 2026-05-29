@@ -10,6 +10,7 @@ from components.paper_mapper import PaperMapper
 from components.session_writer import build_session, save_session
 from components.text_buffer import TextBuffer
 from components.visual_overlay import VisualOverlay
+from components.direct_input import DirectInput
 
 from input_sources.audio_source import AudioSource
 from input_sources.camera_source import CameraSource
@@ -43,7 +44,7 @@ def save_recorded_session(recorded_frames, layout_id):
     print("frame 数量：", len(recorded_frames))
 
 
-def handle_keyboard_input(key, text_buffer, recorded_frames, layout_id):
+def handle_keyboard_input(key, text_buffer, recorded_frames, layout_id, direct_input):
     """
     处理键盘操作。
 
@@ -51,6 +52,7 @@ def handle_keyboard_input(key, text_buffer, recorded_frames, layout_id):
         q: 退出
         c: 清空文本
         s: 保存当前 session
+        o: 切换 Direct Input（直接输入到系统剪贴板）
     """
     should_quit = False
 
@@ -64,19 +66,23 @@ def handle_keyboard_input(key, text_buffer, recorded_frames, layout_id):
     elif key == ord("s"):
         save_recorded_session(recorded_frames, layout_id)
 
+    elif key == ord("o"):
+        enabled = direct_input.toggle()
+        print("Direct Input:", "ON" if enabled else "OFF")
+
     return should_quit
 
 
-def handle_input_decision(input_decider, frame, input_key_id, text_buffer):
+def handle_input_decision(input_decider, frame, input_key_id, text_buffer, direct_input):
+    confirmed_key_id = input_decider.decide_key(frame, input_key_id)
     """
     使用 InputDecider 判断当前 frame 是否产生输入。
     """
-    confirmed_key_id = input_decider.decide_key(frame, input_key_id)
-
     if confirmed_key_id is None:
         return
 
     text_buffer.add_key(confirmed_key_id)
+    direct_input.type_key(confirmed_key_id)
 
     print("输入：", confirmed_key_id)
     print("当前文本：", text_buffer.get_text())
@@ -109,6 +115,7 @@ def main():
     input_decider = InputDecider()
     text_buffer = TextBuffer()
     overlay = VisualOverlay(layout_path)
+    direct_input = DirectInput(enabled=False)
 
     recorded_frames = []
 
@@ -163,7 +170,8 @@ def main():
                 input_decider,
                 frame,
                 input_key_id,
-                text_buffer
+                text_buffer,
+                direct_input
             )
 
             display_image = overlay.draw_all(
@@ -171,7 +179,8 @@ def main():
                 frame,
                 visual_data,
                 display_key_id,
-                text_buffer.get_text()
+                text_buffer.get_text(),
+                direct_input.is_enabled()
             )
 
             cv2.imshow("Paper Keyboard", display_image)
@@ -182,7 +191,8 @@ def main():
                 key,
                 text_buffer,
                 recorded_frames,
-                layout_id
+                layout_id,
+                direct_input
             )
 
             if should_quit:
