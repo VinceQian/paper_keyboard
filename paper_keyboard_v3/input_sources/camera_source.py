@@ -13,7 +13,7 @@ class CameraSource:
     它暂时不负责识别手指位置。
     """
 
-    def __init__(self, camera_id=0):
+    def __init__(self, camera_id=1):
         self.camera_id = camera_id
         self.cap = cv2.VideoCapture(camera_id)
 
