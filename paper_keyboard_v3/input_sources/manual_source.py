@@ -8,6 +8,27 @@ class ManualSource:
     这个类主要用于测试：
     不需要摄像头，也不需要麦克风，
     直接用一段字符串生成模拟输入数据。
+
+    当前 frame 格式：
+
+    {
+        "frame_id": 1,
+        "t": 0.03,
+        "fingers": [
+            {
+                "finger_id": 1,
+                "x": 132.4,
+                "y": 78.6
+            }
+        ],
+        "tap": {
+            "candidate": 1
+        }
+    }
+
+    candidate 规则：
+        -1: 没有触发输入
+         1: 右手食指触发输入
     """
 
     def __init__(self, layout_path):
@@ -24,23 +45,17 @@ class ManualSource:
         """
         根据 layout 计算每个按键的中心点。
 
-        例如一个按键：
-        {
-            "id": "1",
-            "x": 20,
-            "y": 20,
-            "w": 20,
-            "h": 22
-        }
-
-        它的中心点就是：
-        x = 20 + 20 / 2
-        y = 20 + 22 / 2
+        返回：
+            {
+                "1": {"x": 57.0, "y": 82.0},
+                "2": {"x": 103.0, "y": 82.0}
+            }
         """
         key_centers = {}
 
         for key in self.layout["keys"]:
             key_id = key["id"]
+
             center_x = key["x"] + key["w"] / 2
             center_y = key["y"] + key["h"] / 2
 
@@ -51,7 +66,7 @@ class ManualSource:
 
         return key_centers
 
-    def create_frame(self, frame_id, t, key_id, audio_tap):
+    def create_frame(self, frame_id, t, key_id, candidate):
         """
         创建一帧模拟数据。
 
@@ -59,7 +74,9 @@ class ManualSource:
             frame_id: 当前是第几帧
             t: 当前时间
             key_id: 手指所在的按键 id
-            audio_tap: 是否检测到敲击声音
+            candidate: 当前输入候选手指
+                       -1 表示没有触发
+                        1 表示右手食指触发
         """
         position = self.key_centers[key_id]
 
@@ -74,7 +91,7 @@ class ManualSource:
                 }
             ],
             "tap": {
-                "audio": audio_tap
+                "candidate": candidate
             }
         }
 
@@ -85,9 +102,18 @@ class ManualSource:
         根据输入文本生成一组 frames。
 
         每个字符生成 3 帧：
-        1. 手指在键上，但还没敲击
-        2. 手指在键上，检测到敲击
-        3. 手指在键上，敲击结束
+
+        第 1 帧：
+            手指在键上，但没有触发输入
+            candidate = -1
+
+        第 2 帧：
+            手指在键上，并触发输入
+            candidate = 1
+
+        第 3 帧：
+            手指仍在键上，但触发结束
+            candidate = -1
 
         这样可以模拟一次完整按键过程。
         """
@@ -100,15 +126,36 @@ class ManualSource:
                 print(f"跳过未知按键：{key_id}")
                 continue
 
-            frames.append(self.create_frame(frame_id, t, key_id, False))
+            frames.append(
+                self.create_frame(
+                    frame_id=frame_id,
+                    t=t,
+                    key_id=key_id,
+                    candidate=-1
+                )
+            )
             frame_id += 1
             t += frame_time
 
-            frames.append(self.create_frame(frame_id, t, key_id, True))
+            frames.append(
+                self.create_frame(
+                    frame_id=frame_id,
+                    t=t,
+                    key_id=key_id,
+                    candidate=1
+                )
+            )
             frame_id += 1
             t += frame_time
 
-            frames.append(self.create_frame(frame_id, t, key_id, False))
+            frames.append(
+                self.create_frame(
+                    frame_id=frame_id,
+                    t=t,
+                    key_id=key_id,
+                    candidate=-1
+                )
+            )
             frame_id += 1
             t += frame_time
 
@@ -124,12 +171,18 @@ def main():
         frame_id = frame["frame_id"]
         t = frame["t"]
         finger = frame["fingers"][0]
-        audio_tap = frame["tap"]["audio"]
+        candidate = frame["tap"]["candidate"]
 
         x = finger["x"]
         y = finger["y"]
 
-        print(f"frame {frame_id}, t={t:.2f}, finger=({x}, {y}), audio={audio_tap}")
+        print(
+            f"frame {frame_id}, "
+            f"t={t:.2f}, "
+            f"finger_id={finger['finger_id']}, "
+            f"finger=({x}, {y}), "
+            f"candidate={candidate}"
+        )
 
 
 if __name__ == "__main__":

@@ -9,12 +9,12 @@
       "fingers": [
         {
           "finger_id": 1,
-          "x": 25,
-          "y": 25
+          "x": 57,
+          "y": 82
         }
       ],
       "tap": {
-        "audio": false
+        "candidate": -1
       }
     },
     {
@@ -23,12 +23,26 @@
       "fingers": [
         {
           "finger_id": 1,
-          "x": 25,
-          "y": 25
+          "x": 57,
+          "y": 82
         }
       ],
       "tap": {
-        "audio": true
+        "candidate": 1
+      }
+    },
+    {
+      "frame_id": 3,
+      "t": 0.06,
+      "fingers": [
+        {
+          "finger_id": 1,
+          "x": 57,
+          "y": 82
+        }
+      ],
+      "tap": {
+        "candidate": -1
       }
     }
   ]

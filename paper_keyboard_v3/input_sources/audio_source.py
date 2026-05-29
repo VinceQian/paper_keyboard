@@ -8,28 +8,32 @@ class AudioSource:
     """
     麦克风敲击检测输入源。
 
-    当前版本只做一件事：
-    当麦克风音量突然超过阈值时，认为发生了一次敲击。
+    当前版本用于基础版纸面键盘：
 
-    它不负责：
-    1. 判断手指在哪个键上
-    2. 判断哪个手指是 candidate
-    3. 保存输入文本
+    没有检测到敲击：
+        get_candidate() 返回 -1
 
-    它只提供：
-    get_tap() -> 是否刚刚检测到一次敲击
+    检测到敲击：
+        get_candidate() 返回 candidate_id
+
+    当前 candidate_id 默认为 1，也就是右手食指。
+    以后如果换成指套、手套或串口按钮输入源，
+    新的 source 可以直接返回 -1 到 9。
     """
 
     def __init__(
         self,
         threshold=0.04,
         cooldown=0.25,
+        candidate_id=1,
         samplerate=44100,
         blocksize=1024,
         device=None
     ):
         self.threshold = threshold
         self.cooldown = cooldown
+        self.candidate_id = candidate_id
+
         self.samplerate = samplerate
         self.blocksize = blocksize
         self.device = device
@@ -45,7 +49,7 @@ class AudioSource:
         sounddevice 会自动反复调用这个函数。
 
         indata 是当前这一小段麦克风数据。
-        我们用 RMS 计算这一小段声音的整体音量。
+        这里用 RMS 计算这一小段声音的整体音量。
         """
         if status:
             print(status)
@@ -95,6 +99,21 @@ class AudioSource:
 
         return False
 
+    def get_candidate(self):
+        """
+        返回当前输入候选手指。
+
+        当前音频基础版：
+            没有敲击 -> -1
+            检测到敲击 -> candidate_id
+
+        默认 candidate_id = 1，表示右手食指。
+        """
+        if self.get_tap():
+            return self.candidate_id
+
+        return -1
+
     def get_volume(self):
         """返回当前麦克风音量。"""
         return self.current_volume
@@ -103,13 +122,15 @@ class AudioSource:
 def main():
     audio_source = AudioSource(
         threshold=0.04,
-        cooldown=0.25
+        cooldown=0.25,
+        candidate_id=1
     )
 
     audio_source.start()
 
     print("AudioSource 敲击检测测试开始")
-    print("敲一下桌面或纸面，如果检测到，会输出 TAP")
+    print("检测到敲击时，candidate 应该输出 1")
+    print("没有敲击时，candidate 输出 -1")
     print("如果太敏感，就调高 threshold")
     print("如果检测不到，就调低 threshold")
     print("按 Ctrl+C 退出")
@@ -117,11 +138,12 @@ def main():
     try:
         while True:
             volume = audio_source.get_volume()
+            candidate = audio_source.get_candidate()
 
-            if audio_source.get_tap():
-                print(f"TAP! volume={volume:.4f}")
+            if candidate != -1:
+                print(f"candidate={candidate}, volume={volume:.4f}")
             else:
-                print(f"volume={volume:.4f}", end="\r")
+                print(f"candidate={candidate}, volume={volume:.4f}", end="\r")
 
             time.sleep(0.03)
 

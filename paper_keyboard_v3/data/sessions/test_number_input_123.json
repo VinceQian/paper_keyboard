@@ -9,12 +9,12 @@
       "fingers": [
         {
           "finger_id": 1,
-          "x": 25,
-          "y": 25
+          "x": 57,
+          "y": 82
         }
       ],
       "tap": {
-        "audio": false
+        "candidate": -1
       }
     },
     {
@@ -23,12 +23,12 @@
       "fingers": [
         {
           "finger_id": 1,
-          "x": 25,
-          "y": 25
+          "x": 57,
+          "y": 82
         }
       ],
       "tap": {
-        "audio": true
+        "candidate": 1
       }
     },
     {
@@ -37,12 +37,12 @@
       "fingers": [
         {
           "finger_id": 1,
-          "x": 25,
-          "y": 25
+          "x": 57,
+          "y": 82
         }
       ],
       "tap": {
-        "audio": true
+        "candidate": 1
       }
     },
     {
@@ -51,12 +51,12 @@
       "fingers": [
         {
           "finger_id": 1,
-          "x": 25,
-          "y": 25
+          "x": 57,
+          "y": 82
         }
       ],
       "tap": {
-        "audio": false
+        "candidate": -1
       }
     },
     {
@@ -65,12 +65,12 @@
       "fingers": [
         {
           "finger_id": 1,
-          "x": 50,
-          "y": 25
+          "x": 103,
+          "y": 82
         }
       ],
       "tap": {
-        "audio": false
+        "candidate": -1
       }
     },
     {
@@ -79,12 +79,12 @@
       "fingers": [
         {
           "finger_id": 1,
-          "x": 50,
-          "y": 25
+          "x": 103,
+          "y": 82
         }
       ],
       "tap": {
-        "audio": true
+        "candidate": 1
       }
     },
     {
@@ -93,12 +93,12 @@
       "fingers": [
         {
           "finger_id": 1,
-          "x": 50,
-          "y": 25
+          "x": 103,
+          "y": 82
         }
       ],
       "tap": {
-        "audio": false
+        "candidate": -1
       }
     },
     {
@@ -107,12 +107,12 @@
       "fingers": [
         {
           "finger_id": 1,
-          "x": 75,
-          "y": 25
+          "x": 149,
+          "y": 82
         }
       ],
       "tap": {
-        "audio": false
+        "candidate": -1
       }
     },
     {
@@ -121,12 +121,12 @@
       "fingers": [
         {
           "finger_id": 1,
-          "x": 75,
-          "y": 25
+          "x": 149,
+          "y": 82
         }
       ],
       "tap": {
-        "audio": true
+        "candidate": 1
       }
     },
     {
@@ -135,12 +135,12 @@
       "fingers": [
         {
           "finger_id": 1,
-          "x": 75,
-          "y": 25
+          "x": 149,
+          "y": 82
         }
       ],
       "tap": {
-        "audio": false
+        "candidate": -1
       }
     }
   ]

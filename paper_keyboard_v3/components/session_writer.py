@@ -7,13 +7,42 @@ def build_session(session_id, layout_id, frames, unit="mm"):
     根据基本信息和 frames，生成一个完整的 session 字典。
 
     参数：
-        session_id: 这次输入记录的 id
-        layout_id: 使用的键盘布局 id
-        frames: 输入过程中的所有 frame
-        unit: 坐标单位，默认是 mm
+        session_id:
+            这次输入记录的 id。
 
-    返回：
-        一个可以保存成 JSON 的 session 字典
+        layout_id:
+            使用的键盘布局 id。
+
+        frames:
+            输入过程中的所有 frame。
+
+        unit:
+            坐标单位，默认是 mm。
+
+    frame 格式示例：
+
+    {
+        "frame_id": 1,
+        "t": 0.03,
+        "fingers": [
+            {
+                "finger_id": 1,
+                "x": 57,
+                "y": 82
+            }
+        ],
+        "tap": {
+            "candidate": 1
+        }
+    }
+
+    tap.candidate 规则：
+        -1:
+            没有输入候选 / 没有触发。
+
+        0-9:
+            某个手指触发输入。
+            当前基础版通常只会用到 1，也就是右手食指。
     """
     session = {
         "session_id": session_id,
@@ -48,12 +77,12 @@ def main():
             "fingers": [
                 {
                     "finger_id": 1,
-                    "x": 25,
-                    "y": 25
+                    "x": 57,
+                    "y": 82
                 }
             ],
             "tap": {
-                "audio": False
+                "candidate": -1
             }
         },
         {
@@ -62,12 +91,26 @@ def main():
             "fingers": [
                 {
                     "finger_id": 1,
-                    "x": 25,
-                    "y": 25
+                    "x": 57,
+                    "y": 82
                 }
             ],
             "tap": {
-                "audio": True
+                "candidate": 1
+            }
+        },
+        {
+            "frame_id": 3,
+            "t": 0.06,
+            "fingers": [
+                {
+                    "finger_id": 1,
+                    "x": 57,
+                    "y": 82
+                }
+            ],
+            "tap": {
+                "candidate": -1
             }
         }
     ]
@@ -78,9 +121,10 @@ def main():
         frames=test_frames
     )
 
-    save_session("data/generated/test_writer_output.json", session)
+    output_path = "data/generated/test_writer_output.json"
+    save_session(output_path, session)
 
-    print("session 已保存到：data/generated/test_writer_output.json")
+    print("session 已保存到：", output_path)
 
 
 if __name__ == "__main__":

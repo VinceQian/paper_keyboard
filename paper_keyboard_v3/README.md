@@ -239,7 +239,7 @@ session 用来记录一次输入过程。
         }
       ],
       "tap": {
-        "audio": true
+        "candidate": 1
       }
     }
   ]
@@ -258,7 +258,7 @@ session 用来记录一次输入过程。
 - `finger_id`：手指编号。
 - `x`：手指在纸面上的 x 坐标。
 - `y`：手指在纸面上的 y 坐标。
-- `tap.audio`：当前帧是否检测到敲击声音。
+- `tap.candidate`：当前帧是否检测到敲击。
 
 后续如果支持多指输入，可以让 `fingers` 中出现多个 finger：
 
@@ -318,7 +318,7 @@ text_buffer 更新输出文本
 ```text
 手指在某个按键范围内
 并且
-tap.audio 为 true
+tap.candidate 不为 -1
 ```
 
 也就是说：
