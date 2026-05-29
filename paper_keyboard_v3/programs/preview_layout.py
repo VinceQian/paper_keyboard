@@ -44,7 +44,8 @@ def draw_marker(canvas, marker, scale):
     把 ArUco marker 画到纸面键盘图上。
 
     注意：
-    marker 的 id 只用于识别，不额外画文字。
+        ArUco marker 应该保持正方形。
+        marker 的 id 只用于识别，不额外画文字。
     """
     marker_id = marker["id"]
 
@@ -52,6 +53,9 @@ def draw_marker(canvas, marker, scale):
     y = mm_to_px(marker["y"], scale)
     w = mm_to_px(marker["w"], scale)
     h = mm_to_px(marker["h"], scale)
+
+    if w != h:
+        print(f"警告：marker {marker_id} 不是正方形，可能影响识别")
 
     marker_image = create_marker_image(marker_id, w)
 
@@ -83,7 +87,7 @@ def draw_key(canvas, key, scale):
     font_scale = 1.0
     thickness = 2
 
-    text_size, baseline = cv2.getTextSize(
+    text_size, _ = cv2.getTextSize(
         key_id,
         font,
         font_scale,
@@ -108,6 +112,19 @@ def draw_key(canvas, key, scale):
     )
 
 
+def draw_board_border(canvas):
+    """画出整张纸面的外边框。"""
+    height, width = canvas.shape
+
+    cv2.rectangle(
+        canvas,
+        (0, 0),
+        (width - 1, height - 1),
+        0,
+        2
+    )
+
+
 def draw_layout(layout, scale):
     """根据 layout 生成完整纸面键盘图片。"""
     board = layout["board"]
@@ -123,15 +140,19 @@ def draw_layout(layout, scale):
     for key in layout["keys"]:
         draw_key(canvas, key, scale)
 
-    cv2.rectangle(
-        canvas,
-        (0, 0),
-        (board_w_px - 1, board_h_px - 1),
-        0,
-        2
-    )
+    draw_board_border(canvas)
 
     return canvas
+
+
+def save_image(output_path, image):
+    """保存生成的图片。"""
+    output_folder = os.path.dirname(output_path)
+
+    if output_folder != "":
+        os.makedirs(output_folder, exist_ok=True)
+
+    cv2.imwrite(output_path, image)
 
 
 def main():
@@ -143,8 +164,7 @@ def main():
     layout = load_layout(layout_path)
     canvas = draw_layout(layout, scale)
 
-    os.makedirs("data/generated", exist_ok=True)
-    cv2.imwrite(output_path, canvas)
+    save_image(output_path, canvas)
 
     print("已生成纸面键盘图片：", output_path)
 

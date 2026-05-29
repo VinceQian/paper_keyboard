@@ -41,6 +41,7 @@ class TextBuffer:
         """返回当前文本。"""
         return self.text
 
+
 def main():
     buffer = TextBuffer()
 
@@ -58,6 +59,7 @@ def main():
 
     buffer.clear()
     print(buffer.get_text())
+
 
 if __name__ == "__main__":
     main()

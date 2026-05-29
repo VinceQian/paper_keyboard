@@ -68,6 +68,9 @@ class AudioSource:
 
     def start(self):
         """开始监听麦克风。"""
+        if self.stream is not None:
+            return
+
         self.stream = sd.InputStream(
             device=self.device,
             channels=1,
@@ -101,7 +104,7 @@ class AudioSource:
 
     def get_candidate(self):
         """
-        返回当前输入候选手指。
+        返回当前输入触发手指。
 
         当前音频基础版：
             没有敲击 -> -1
@@ -150,7 +153,9 @@ def main():
     except KeyboardInterrupt:
         pass
 
-    audio_source.stop()
+    finally:
+        audio_source.stop()
+
     print()
     print("AudioSource 敲击检测测试结束")
 

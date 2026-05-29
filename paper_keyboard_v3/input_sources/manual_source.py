@@ -27,8 +27,11 @@ class ManualSource:
     }
 
     candidate 规则：
-        -1: 没有触发输入
-         1: 右手食指触发输入
+        -1: 没有输入触发
+        0-9: 某个 finger_id 触发输入
+
+    当前 ManualSource 默认只模拟 finger_id = 1，
+    也就是右手食指。
     """
 
     def __init__(self, layout_path):
@@ -74,7 +77,7 @@ class ManualSource:
             frame_id: 当前是第几帧
             t: 当前时间
             key_id: 手指所在的按键 id
-            candidate: 当前输入候选手指
+            candidate: 当前输入触发手指
                        -1 表示没有触发
                         1 表示右手食指触发
         """

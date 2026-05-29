@@ -13,6 +13,12 @@ class PaperMapper:
     2. 在摄像头画面中识别 ArUco marker
     3. 根据 marker 的图像角点和纸面角点计算 Homography
     4. 把图像坐标转换成纸面坐标
+
+    它不负责：
+    1. 识别手指
+    2. 判断按键
+    3. 判断输入
+    4. 保存文本
     """
 
     def __init__(self, layout_path):
@@ -27,7 +33,9 @@ class PaperMapper:
 
         self.marker_map = self.build_marker_map()
 
-        self.dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+        self.dictionary = cv2.aruco.getPredefinedDictionary(
+            cv2.aruco.DICT_4X4_50
+        )
         self.parameters = cv2.aruco.DetectorParameters()
 
     def load_layout(self, layout_path):
@@ -78,7 +86,11 @@ class PaperMapper:
         """
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        detector = cv2.aruco.ArucoDetector(self.dictionary, self.parameters)
+        detector = cv2.aruco.ArucoDetector(
+            self.dictionary,
+            self.parameters
+        )
+
         corners, ids, rejected = detector.detectMarkers(gray)
 
         return corners, ids
@@ -122,7 +134,10 @@ class PaperMapper:
         image_points = np.array(image_points, dtype=np.float32)
         paper_points = np.array(paper_points, dtype=np.float32)
 
-        homography, status = cv2.findHomography(image_points, paper_points)
+        homography, status = cv2.findHomography(
+            image_points,
+            paper_points
+        )
 
         return homography, corners, ids
 
@@ -149,11 +164,15 @@ class PaperMapper:
 
     def draw_debug(self, image, corners, ids, homography):
         """
-        在画面上画出调试信息。
+        在画面上画出 PaperMapper 的调试信息。
 
         包括：
         1. 检测到的 ArUco marker
         2. 识别到的纸面边框
+
+        注意：
+        正式主程序中的完整显示由 VisualOverlay 负责。
+        这个函数主要用于单独测试 PaperMapper。
         """
         debug_image = image.copy()
 
@@ -174,7 +193,10 @@ class PaperMapper:
             )
 
             inverse_homography = np.linalg.inv(homography)
-            image_corners = cv2.perspectiveTransform(paper_corners, inverse_homography)
+            image_corners = cv2.perspectiveTransform(
+                paper_corners,
+                inverse_homography
+            )
             image_corners = image_corners.astype(int)
 
             cv2.polylines(
@@ -192,7 +214,6 @@ def main():
     layout_path = "data/layouts/keyboard_number_v1.json"
 
     mapper = PaperMapper(layout_path)
-
     cap = cv2.VideoCapture(1)
 
     if not cap.isOpened():
@@ -203,46 +224,53 @@ def main():
     print("请把生成好的纸面键盘放到摄像头下")
     print("按 q 退出")
 
-    while True:
-        success, image = cap.read()
+    try:
+        while True:
+            success, image = cap.read()
 
-        if not success:
-            print("读取摄像头失败")
-            break
+            if not success:
+                print("读取摄像头失败")
+                break
 
-        homography, corners, ids = mapper.get_homography(image)
-        debug_image = mapper.draw_debug(image, corners, ids, homography)
-
-        if homography is not None:
-            cv2.putText(
-                debug_image,
-                "Paper detected",
-                (20, 40),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                (0, 255, 0),
-                2
-            )
-        else:
-            cv2.putText(
-                debug_image,
-                "Need ArUco markers",
-                (20, 40),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                (0, 0, 255),
-                2
+            homography, corners, ids = mapper.get_homography(image)
+            debug_image = mapper.draw_debug(
+                image,
+                corners,
+                ids,
+                homography
             )
 
-        cv2.imshow("Paper Mapper Test", debug_image)
+            if homography is not None:
+                cv2.putText(
+                    debug_image,
+                    "Paper detected",
+                    (20, 40),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 255, 0),
+                    2
+                )
+            else:
+                cv2.putText(
+                    debug_image,
+                    "Need ArUco markers",
+                    (20, 40),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 0, 255),
+                    2
+                )
 
-        key = cv2.waitKey(1)
+            cv2.imshow("Paper Mapper Test", debug_image)
 
-        if key == ord("q"):
-            break
+            key = cv2.waitKey(1)
 
-    cap.release()
-    cv2.destroyAllWindows()
+            if key == ord("q"):
+                break
+
+    finally:
+        cap.release()
+        cv2.destroyAllWindows()
 
     print("PaperMapper 测试结束")
 

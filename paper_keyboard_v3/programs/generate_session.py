@@ -3,6 +3,12 @@ from components.session_writer import build_session, save_session
 
 
 def main():
+    """
+    生成一段模拟输入 session。
+
+    这个程序不使用摄像头和麦克风，
+    而是通过 ManualSource 直接生成测试 frames。
+    """
     layout_path = "data/layouts/keyboard_number_v1.json"
 
     text = "12345"

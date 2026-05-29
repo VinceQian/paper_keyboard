@@ -40,7 +40,12 @@ class MediaPipeHandSource:
         参数：
             swap_hands:
                 如果发现左右手编号反了，就改成 True。
-                当前因为我们会先镜像画面，所以默认先用 False。
+
+                单独测试时，如果先用 cv2.flip(image, 1) 镜像画面，
+                通常可以设为 False。
+
+                正式主程序中如果不镜像原始画面，
+                需要根据实际测试结果决定 True / False。
         """
         self.swap_hands = swap_hands
 
@@ -114,8 +119,6 @@ class MediaPipeHandSource:
         参数：
             image:
                 OpenCV 读取到的 BGR 图像。
-                这里假设传进来的 image 已经是最终要显示的方向。
-                如果主程序做了镜像，就处理镜像后的画面。
 
         返回：
             result_data:
@@ -247,6 +250,8 @@ def main():
         print("摄像头打开失败")
         return
 
+    # 单独测试时镜像画面，让它像照镜子一样显示。
+    # 如果发现左右手编号反了，可以把 swap_hands 改成 True。
     hand_source = MediaPipeHandSource(swap_hands=False)
 
     print("MediaPipe 双手识别测试开始")
@@ -258,33 +263,36 @@ def main():
     print("蓝色点：其他指尖")
     print("按 q 退出")
 
-    while True:
-        success, image = cap.read()
+    try:
+        while True:
+            success, image = cap.read()
 
-        if not success:
-            print("读取摄像头失败")
-            break
+            if not success:
+                print("读取摄像头失败")
+                break
 
-        # 镜像画面，让它像照镜子一样显示
-        image = cv2.flip(image, 1)
+            # 这里只在单独测试 MediaPipe 时镜像画面。
+            # 正式主程序里不要随便镜像原始画面，否则会影响 ArUco 坐标映射。
+            image = cv2.flip(image, 1)
 
-        result_data, mediapipe_result = hand_source.process_image(image)
-        debug_image = hand_source.draw_debug(
-            image,
-            result_data,
-            mediapipe_result
-        )
+            result_data, mediapipe_result = hand_source.process_image(image)
+            debug_image = hand_source.draw_debug(
+                image,
+                result_data,
+                mediapipe_result
+            )
 
-        cv2.imshow("MediaPipe Hand Test", debug_image)
+            cv2.imshow("MediaPipe Hand Test", debug_image)
 
-        key = cv2.waitKey(1)
+            key = cv2.waitKey(1)
 
-        if key == ord("q"):
-            break
+            if key == ord("q"):
+                break
 
-    hand_source.close()
-    cap.release()
-    cv2.destroyAllWindows()
+    finally:
+        hand_source.close()
+        cap.release()
+        cv2.destroyAllWindows()
 
     print("MediaPipe 双手识别测试结束")
 

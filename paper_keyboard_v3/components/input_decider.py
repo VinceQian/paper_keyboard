@@ -5,16 +5,21 @@ class InputDecider:
     当前版本使用 frame["tap"]["candidate"] 判断输入触发。
 
     tap.candidate 的含义：
-        -1: 当前没有候选输入
-         1: 当前候选输入来源是右手食指
+        -1:
+            当前没有输入触发。
 
-    当前基础版只支持右手食指，所以 candidate 只会是 -1 或 1。
-    后续多指版本可以扩展为 -1 到 9。
+        0-9:
+            某个手指触发了输入。
+
+    当前 AudioSource 只会输出 -1 或 1，
+    其中 1 表示右手食指。
+    未来如果换成指套、手套或串口按钮输入源，
+    candidate 可以扩展为 -1 到 9。
     """
 
     def __init__(self):
         # 记录上一帧的 candidate
-        # 用来避免同一次敲击持续多帧时重复输入
+        # 用来避免同一次触发持续多帧时重复输入
         self.last_candidate = -1
 
     def get_candidate(self, frame):
@@ -22,7 +27,7 @@ class InputDecider:
         从 frame 中读取 tap.candidate。
 
         如果 frame 里没有 tap 或 candidate，
-        就默认认为没有候选输入。
+        就默认认为没有输入触发。
         """
         tap_info = frame.get("tap", {})
         return tap_info.get("candidate", -1)
@@ -48,16 +53,12 @@ class InputDecider:
 
         has_key = current_key_id is not None
 
-        # 当前基础版里，candidate != -1 就表示有输入候选
-        has_candidate = current_candidate != -1
-
-        # candidate 从 -1 变成 1 的这一帧，才算一次新的输入
         is_new_candidate = (
             self.last_candidate == -1
             and current_candidate != -1
         )
 
-        if has_key and has_candidate and is_new_candidate:
+        if has_key and is_new_candidate:
             result = current_key_id
         else:
             result = None
@@ -103,10 +104,10 @@ def main():
         }
     ]
 
-    test_key_ids = ["1", "1", "1", "1", "2"]
+    test_keys = ["1", "1", "1", "1", "2"]
 
-    for frame, key_id in zip(test_frames, test_key_ids):
-        result = decider.decide_key(frame, key_id)
+    for frame, key in zip(test_frames, test_keys):
+        result = decider.decide_key(frame, key)
         print(f"frame {frame['frame_id']} -> 输入：{result}")
 
 

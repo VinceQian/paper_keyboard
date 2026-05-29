@@ -2,7 +2,7 @@ class FrameBuilder:
     """
     汇总多个输入源，生成项目统一 frame。
 
-    当前输入来源：
+    当前依赖组件：
     1. PaperMapper：识别纸面，并提供图像坐标到纸面坐标的转换
     2. MediaPipeHandSource：识别手和指尖
     3. tap_source：提供 tap.candidate
@@ -108,92 +108,7 @@ class FrameBuilder:
 
 
 def main():
-    import cv2
-    import time
-
-    from components.paper_mapper import PaperMapper
-    from input_sources.mediapipe_hand_source import MediaPipeHandSource
-    from input_sources.audio_source import AudioSource
-
-    layout_path = "data/layouts/keyboard_number_v1.json"
-
-    paper_mapper = PaperMapper(layout_path)
-    hand_source = MediaPipeHandSource(swap_hands=True)
-    tap_source = AudioSource(
-        threshold=0.04,
-        cooldown=0.25,
-        candidate_id=1
-    )
-
-    frame_builder = FrameBuilder(
-        paper_mapper,
-        hand_source,
-        tap_source
-    )
-
-    cap = cv2.VideoCapture(1)
-
-    if not cap.isOpened():
-        print("摄像头打开失败")
-        return
-
-    tap_source.start()
-
-    start_time = time.time()
-    frame_id = 1
-
-    print("FrameBuilder 测试开始")
-    print("它会生成完整 frame，但不判断输入、不保存文本")
-    print("按 q 退出")
-
-    try:
-        while True:
-            success, image = cap.read()
-
-            if not success:
-                print("读取摄像头失败")
-                break
-
-            t = time.time() - start_time
-
-            frame, visual_data = frame_builder.build_frame(
-                image,
-                frame_id,
-                t
-            )
-
-            if frame_id % 15 == 0:
-                print(frame)
-
-            debug_image = paper_mapper.draw_debug(
-                image,
-                visual_data["corners"],
-                visual_data["ids"],
-                visual_data["homography"]
-            )
-
-            debug_image = hand_source.draw_debug(
-                debug_image,
-                visual_data["hand_data"],
-                visual_data["mediapipe_result"]
-            )
-
-            cv2.imshow("FrameBuilder Test", debug_image)
-
-            key = cv2.waitKey(1)
-
-            if key == ord("q"):
-                break
-
-            frame_id += 1
-
-    finally:
-        tap_source.stop()
-        hand_source.close()
-        cap.release()
-        cv2.destroyAllWindows()
-
-    print("FrameBuilder 测试结束")
+    print("FrameBuilder 是 main.py 的依赖组件，从 app.py 运行具体程序。")
 
 
 if __name__ == "__main__":

@@ -10,7 +10,11 @@ class CameraSource:
     2. 读取摄像头画面
     3. 关闭摄像头
 
-    它暂时不负责识别手指位置。
+    它不负责：
+    1. 识别手指
+    2. 识别纸面
+    3. 镜像画面
+    4. 生成 frame
     """
 
     def __init__(self, camera_id=1):
@@ -19,6 +23,10 @@ class CameraSource:
 
         if not self.cap.isOpened():
             print("摄像头打开失败，请检查 camera_id 或摄像头权限。")
+
+    def is_opened(self):
+        """返回摄像头是否成功打开。"""
+        return self.cap.isOpened()
 
     def read_image(self):
         """
@@ -38,6 +46,9 @@ class CameraSource:
 
 def main():
     source = CameraSource(camera_id=1)
+
+    if not source.is_opened():
+        return
 
     print("摄像头测试开始")
     print("按 q 退出")

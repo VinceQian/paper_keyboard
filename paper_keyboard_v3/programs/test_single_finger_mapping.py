@@ -54,49 +54,51 @@ def main():
     print("q：退出")
     print()
 
-    while True:
-        success, image = camera_source.read_image()
+    try:
+        while True:
+            success, image = camera_source.read_image()
 
-        if not success:
-            print("读取摄像头失败")
-            break
+            if not success:
+                print("读取摄像头失败")
+                break
 
-        t = time.time() - start_time
+            t = time.time() - start_time
 
-        frame, visual_data = frame_builder.build_frame(
-            image,
-            frame_id,
-            t
-        )
+            frame, visual_data = frame_builder.build_frame(
+                image,
+                frame_id,
+                t
+            )
 
-        # 这里故意不使用 tap.candidate。
-        # 因为这个测试只看右手食指当前映射到哪个 key。
-        current_key_id = get_key_id_for_finger(
-            frame,
-            finger_id=1,
-            key_finder=key_finder
-        )
+            # 这里故意不使用 tap.candidate。
+            # 因为这个测试只看右手食指当前映射到哪个 key。
+            display_key_id = get_key_id_for_finger(
+                frame,
+                finger_id=1,
+                key_finder=key_finder
+            )
 
-        debug_image = overlay.draw_all(
-            image,
-            frame,
-            visual_data,
-            current_key_id,
-            text=""
-        )
+            display_image = overlay.draw_all(
+                image,
+                frame,
+                visual_data,
+                display_key_id,
+                text=""
+            )
 
-        cv2.imshow("Single Finger Mapping Test", debug_image)
+            cv2.imshow("Single Finger Mapping Test", display_image)
 
-        key = cv2.waitKey(1)
+            key = cv2.waitKey(1)
 
-        if key == ord("q"):
-            break
+            if key == ord("q"):
+                break
 
-        frame_id += 1
+            frame_id += 1
 
-    hand_source.close()
-    camera_source.release()
-    cv2.destroyAllWindows()
+    finally:
+        hand_source.close()
+        camera_source.release()
+        cv2.destroyAllWindows()
 
     print("单指纸面映射测试结束")
 

@@ -6,19 +6,6 @@ def build_session(session_id, layout_id, frames, unit="mm"):
     """
     根据基本信息和 frames，生成一个完整的 session 字典。
 
-    参数：
-        session_id:
-            这次输入记录的 id。
-
-        layout_id:
-            使用的键盘布局 id。
-
-        frames:
-            输入过程中的所有 frame。
-
-        unit:
-            坐标单位，默认是 mm。
-
     frame 格式示例：
 
     {
@@ -38,10 +25,10 @@ def build_session(session_id, layout_id, frames, unit="mm"):
 
     tap.candidate 规则：
         -1:
-            没有输入候选 / 没有触发。
+            没有输入触发。
 
         0-9:
-            某个手指触发输入。
+            某个 finger_id 触发输入。
             当前基础版通常只会用到 1，也就是右手食指。
     """
     session = {
@@ -116,12 +103,12 @@ def main():
     ]
 
     session = build_session(
-        session_id="test_writer_output",
+        session_id="test_session_writer_output",
         layout_id="keyboard_number_v1",
         frames=test_frames
     )
 
-    output_path = "data/generated/test_writer_output.json"
+    output_path = "data/generated/test_session_writer_output.json"
     save_session(output_path, session)
 
     print("session 已保存到：", output_path)

@@ -3,15 +3,16 @@ import json
 
 class KeyFinder:
     """
-    根据键盘布局，判断某个坐标点对应哪个按键。
+    根据键盘布局，判断某个纸面坐标点对应哪个按键。
 
     layout 文件中的每个 key 都是一个矩形：
+
     {
         "id": "1",
-        "x": 20,
-        "y": 20,
-        "w": 20,
-        "h": 22
+        "x": 40,
+        "y": 67,
+        "w": 34,
+        "h": 30
     }
 
     判断逻辑：
@@ -32,11 +33,11 @@ class KeyFinder:
 
     def find_key(self, x, y):
         """
-        根据坐标查找按键。
+        根据纸面坐标查找按键。
 
         参数：
-            x: 手指的 x 坐标
-            y: 手指的 y 坐标
+            x: 手指在纸面上的 x 坐标
+            y: 手指在纸面上的 y 坐标
 
         返回：
             如果坐标落在某个按键内，返回按键 id，比如 "1"
@@ -56,19 +57,21 @@ class KeyFinder:
 
         return None
 
+
 def main():
-    finder = KeyFinder("paper_keyboard_v3/data/layouts/keyboard_number_v1.json")
+    finder = KeyFinder("data/layouts/keyboard_number_v1.json")
 
     test_points = [
-        (25, 25),
-        (50, 25),
-        (125, 55),
-        (10, 10)
+        (57, 82),      # 数字 1 的中心附近
+        (103, 82),     # 数字 2 的中心附近
+        (149, 82),     # 数字 3 的中心附近
+        (10, 10)       # 不在任何按键上
     ]
 
     for x, y in test_points:
-        key = finder.find_key(x, y)
-        print(f"坐标 ({x}, {y}) -> 按键：{key}")
+        key_id = finder.find_key(x, y)
+        print(f"坐标 ({x}, {y}) -> 按键：{key_id}")
+
 
 if __name__ == "__main__":
     main()

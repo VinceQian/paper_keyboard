@@ -23,13 +23,7 @@ def find_finger_by_id(frame, target_finger_id):
     """
     根据 finger_id 从 frame 中找到对应手指。
 
-    找到就返回：
-        {
-            "finger_id": 1,
-            "x": 132.4,
-            "y": 78.6
-        }
-
+    找到就返回该 finger。
     找不到就返回 None。
     """
     fingers = get_fingers(frame)
@@ -68,21 +62,15 @@ def get_finger_position(finger):
     if finger is None:
         return None
 
-    x = finger["x"]
-    y = finger["y"]
-
-    return x, y
+    return finger["x"], finger["y"]
 
 
 def get_current_key_id(frame, key_finder):
     """
     根据当前 frame 判断候选手指所在的按键。
 
-    逻辑：
-        1. 读取 tap.candidate
-        2. 找到 candidate 对应的 finger
-        3. 读取这个 finger 的纸面坐标
-        4. 用 KeyFinder 判断它在哪个按键上
+    这个函数用于输入判断：
+        只有 tap.candidate 指向的手指才会被检查。
 
     返回：
         如果候选手指落在某个键上，返回 key_id。
@@ -95,70 +83,28 @@ def get_current_key_id(frame, key_finder):
         return None
 
     x, y = position
-    key_id = key_finder.find_key(x, y)
+    return key_finder.find_key(x, y)
 
-    return key_id
 
 def get_key_id_for_finger(frame, finger_id, key_finder):
     """
     判断指定 finger_id 当前所在的按键。
 
-    这个函数主要用于视觉测试：
-    即使 tap.candidate == -1，
-    也可以直接查看某个手指当前落在哪个 key 上。
+    这个函数用于显示或测试：
+        它不看 tap.candidate。
+        即使当前没有敲击，也可以查看某个手指指向哪个 key。
 
-    参数：
-        frame:
-            当前 frame。
-
-        finger_id:
-            要检查的手指编号，比如 1 表示右手食指。
-
-        key_finder:
-            KeyFinder 对象。
-
-    返回：
-        如果该手指落在某个键上，返回 key_id。
-        如果找不到该手指，或者不在任何键上，返回 None。
+    例如：
+        finger_id = 1 表示右手食指。
     """
     finger = find_finger_by_id(frame, finger_id)
+    position = get_finger_position(finger)
 
-    if finger is None:
+    if position is None:
         return None
 
-    x = finger["x"]
-    y = finger["y"]
-
+    x, y = position
     return key_finder.find_key(x, y)
-
-def get_first_finger(frame):
-    """
-    从 frame 中取出第一个手指。
-
-    这个函数主要保留给早期 replay_session 兼容使用。
-    当前主流程更推荐用 get_candidate_finger()。
-    """
-    fingers = get_fingers(frame)
-
-    if len(fingers) == 0:
-        return None
-
-    return fingers[0]
-
-
-def get_first_finger_position(frame):
-    """
-    从 frame 中取出第一个手指的坐标。
-
-    这个函数主要保留给早期 replay_session 兼容使用。
-    当前主流程更推荐用 get_current_key_id()。
-    """
-    finger = get_first_finger(frame)
-
-    if finger is None:
-        return None
-
-    return get_finger_position(finger)
 
 
 def main():
@@ -186,8 +132,6 @@ def main():
     print("candidate:", get_candidate(test_frame))
     print("candidate finger:", get_candidate_finger(test_frame))
     print("candidate position:", get_finger_position(get_candidate_finger(test_frame)))
-    print("first finger:", get_first_finger(test_frame))
-    print("first finger position:", get_first_finger_position(test_frame))
 
 
 if __name__ == "__main__":

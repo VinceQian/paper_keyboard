@@ -327,7 +327,7 @@ class VisualOverlay:
 
 
 def main():
-    print("VisualOverlay 是显示组件，请从 app.py 进入 vision_demo 测试。")
+    print("VisualOverlay 是显示组件，请从 app.py 进入 main 测试。")
 
 
 if __name__ == "__main__":

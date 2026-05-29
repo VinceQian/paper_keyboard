@@ -28,10 +28,10 @@ class SessionSource:
 
     tap.candidate 规则：
         -1:
-            没有输入候选 / 没有触发。
+            没有输入触发。
 
         0-9:
-            某个手指触发输入。
+            某个 finger_id 触发输入。
             当前基础版通常只会用到 1，也就是右手食指。
     """
 
@@ -79,26 +79,12 @@ def main():
         tap = frame.get("tap", {})
         candidate = tap.get("candidate", -1)
 
-        if len(fingers) > 0:
-            finger = fingers[0]
-            finger_id = finger["finger_id"]
-            x = finger["x"]
-            y = finger["y"]
-
-            print(
-                f"frame {frame_id}, "
-                f"t={t:.2f}, "
-                f"finger_id={finger_id}, "
-                f"finger=({x}, {y}), "
-                f"candidate={candidate}"
-            )
-        else:
-            print(
-                f"frame {frame_id}, "
-                f"t={t:.2f}, "
-                f"finger=None, "
-                f"candidate={candidate}"
-            )
+        print(
+            f"frame {frame_id}, "
+            f"t={t:.2f}, "
+            f"fingers={len(fingers)}, "
+            f"candidate={candidate}"
+        )
 
 
 if __name__ == "__main__":

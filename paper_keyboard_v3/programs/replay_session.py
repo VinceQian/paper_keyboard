@@ -8,6 +8,8 @@ from components.frame_tools import get_current_key_id
 
 def main():
     session_path = "data/generated/manual_input_12345.json"
+
+    # 如果回放其他 layout 的 session，这里也要改成对应 layout 文件
     layout_path = "data/layouts/keyboard_number_v1.json"
 
     source = SessionSource(session_path)
@@ -18,6 +20,7 @@ def main():
     frames = source.get_frames()
 
     print("开始回放 session")
+    print("session 文件:", session_path)
     print("session_id:", source.get_session_id())
     print("layout_id:", source.get_layout_id())
     print("frame 数量:", len(frames))
@@ -43,8 +46,6 @@ def main():
                 f"输入 {input_key_id}，"
                 f"当前文本：{text_buffer.get_text()}"
             )
-        else:
-            print(f"frame {frame_id}: 无输入")
 
     print()
     print("最终输入结果：", text_buffer.get_text())
