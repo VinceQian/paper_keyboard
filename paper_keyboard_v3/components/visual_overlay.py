@@ -9,7 +9,7 @@ class VisualOverlay:
     """
     视觉显示组件。
 
-    这个类只负责把调试信息画到摄像头画面上。
+    这个类只负责把调试/展示信息画到摄像头画面上。
 
     它不负责：
     1. 识别纸面
@@ -18,12 +18,11 @@ class VisualOverlay:
     4. 判断输入
     5. 保存文本
 
-    它只读取：
+    它读取：
     1. layout
-    2. frame
-    3. debug_data
-    4. current_key_id
-    5. 当前 text
+    2. visual_data
+    3. current_key_id
+    4. 当前 text
     """
 
     def __init__(self, layout_path):
@@ -39,22 +38,6 @@ class VisualOverlay:
         with open(layout_path, "r", encoding="utf-8") as f:
             return json.load(f)
 
-    def get_marker_ids(self, ids):
-        """
-        从 OpenCV ArUco 返回的 ids 中整理 marker id 列表。
-
-        ids 可能是 None，也可能是类似 [[0], [1], [2], [3]] 的数组。
-        """
-        if ids is None:
-            return []
-
-        marker_ids = []
-
-        for marker_id in ids.flatten():
-            marker_ids.append(int(marker_id))
-
-        return marker_ids
-
     def paper_points_to_image_points(self, paper_points, homography):
         """
         把纸面坐标转换回图像坐标。
@@ -68,11 +51,7 @@ class VisualOverlay:
                 ]
 
             homography:
-                图像坐标 -> 纸面坐标 的矩阵
-
-        返回：
-            image_points:
-                图像坐标点。
+                图像坐标 -> 纸面坐标 的矩阵。
         """
         if homography is None:
             return None
@@ -98,14 +77,12 @@ class VisualOverlay:
         w = key["w"]
         h = key["h"]
 
-        corners = [
+        return [
             [x, y],
             [x + w, y],
             [x + w, y + h],
             [x, y + h]
         ]
-
-        return corners
 
     def draw_markers(self, image, corners, ids):
         """画出检测到的 ArUco marker。"""
@@ -157,7 +134,6 @@ class VisualOverlay:
 
         for key in self.keys:
             key_id = key["id"]
-
             paper_corners = self.get_key_corners(key)
 
             image_corners = self.paper_points_to_image_points(
@@ -249,14 +225,14 @@ class VisualOverlay:
                 thickness
             )
 
-    def draw_status_background(self, image):
-        """给左上角状态栏画一个半透明背景，避免文字看不清。"""
+    def draw_text_background(self, image):
+        """给 Text 显示区域加一个半透明背景。"""
         overlay = image.copy()
 
         cv2.rectangle(
             overlay,
             (10, 10),
-            (780, 170),
+            (520, 60),
             (0, 0, 0),
             -1
         )
@@ -272,52 +248,23 @@ class VisualOverlay:
             image
         )
 
-    def draw_status_panel(self, image, frame, debug_data, current_key_id, text):
-        """
-        画左上角状态信息。
+    def draw_text(self, image, text):
+        """只显示当前已经输入的文本。"""
+        self.draw_text_background(image)
 
-        注意：
-        marker 数量、手数量、指尖数量都在这里临时计算，
-        不要求 debug_data 额外提供这些字段。
-        """
-        homography = debug_data["homography"]
-        ids = debug_data["ids"]
-        hand_data = debug_data["hand_data"]
-
-        paper_detected = homography is not None
-        marker_ids = self.get_marker_ids(ids)
-        hand_count = len(hand_data["hands"])
-        fingertip_count = len(hand_data["fingertips"])
-        candidate = frame["tap"]["candidate"]
-
-        lines = [
-            f"Paper: {paper_detected}   Markers: {marker_ids}",
-            f"Hands: {hand_count}   Fingertips: {fingertip_count}",
-            f"Candidate finger: {candidate}   Current key: {current_key_id}",
+        cv2.putText(
+            image,
             f"Text: {text}",
-            "tap: input    c: clear    q: quit"
-        ]
+            (20, 45),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.9,
+            (0, 255, 0),
+            2
+        )
 
-        self.draw_status_background(image)
-
-        x = 20
-        y = 38
-        line_gap = 30
-
-        for i, line in enumerate(lines):
-            cv2.putText(
-                image,
-                line,
-                (x, y + i * line_gap),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 255, 0),
-                2
-            )
-
-    def draw_all(self, image, frame, debug_data, current_key_id, text):
+    def draw_all(self, image, frame, visual_data, current_key_id, text):
         """
-        画出完整调试画面。
+        画出完整显示画面。
 
         参数：
             image:
@@ -325,9 +272,11 @@ class VisualOverlay:
 
             frame:
                 项目核心 frame。
+                当前版本暂时不直接用它，但保留参数位置，
+                后面显示 Recording / Direct Input 等状态时会用到。
 
-            debug_data:
-                临时调试数据，只要求包含：
+            visual_data:
+                临时视觉数据，只要求包含：
                 homography
                 corners
                 ids
@@ -335,7 +284,7 @@ class VisualOverlay:
                 mediapipe_result
 
             current_key_id:
-                当前候选手指所在的按键 id。
+                当前显示用的按键 id。
 
             text:
                 当前已经输入的文本。
@@ -344,36 +293,33 @@ class VisualOverlay:
 
         self.draw_markers(
             debug_image,
-            debug_data["corners"],
-            debug_data["ids"]
+            visual_data["corners"],
+            visual_data["ids"]
         )
 
         self.draw_paper_border(
             debug_image,
-            debug_data["homography"]
+            visual_data["homography"]
         )
 
         self.draw_keys(
             debug_image,
-            debug_data["homography"],
+            visual_data["homography"],
             current_key_id
         )
 
         self.draw_hands(
             debug_image,
-            debug_data["mediapipe_result"]
+            visual_data["mediapipe_result"]
         )
 
         self.draw_fingertips(
             debug_image,
-            debug_data["hand_data"]
+            visual_data["hand_data"]
         )
 
-        self.draw_status_panel(
+        self.draw_text(
             debug_image,
-            frame,
-            debug_data,
-            current_key_id,
             text
         )
 

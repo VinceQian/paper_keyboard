@@ -1,143 +1,89 @@
+import time
+
 import cv2
-import numpy as np
 
-from components.paper_mapper import PaperMapper
+from components.frame_builder import FrameBuilder
+from components.frame_tools import get_key_id_for_finger
 from components.key_finder import KeyFinder
-from input_sources.mediapipe_finger_source import MediaPipeFingerSource
+from components.paper_mapper import PaperMapper
+from components.visual_overlay import VisualOverlay
+
+from input_sources.camera_source import CameraSource
+from input_sources.mediapipe_hand_source import MediaPipeHandSource
 
 
-def draw_finger_point(image, finger):
-    """在画面上画出食指指尖位置。"""
-    image_x = finger["image_x"]
-    image_y = finger["image_y"]
-
-    cv2.circle(
-        image,
-        (image_x, image_y),
-        10,
-        (0, 255, 0),
-        -1
-    )
-
-
-def draw_current_key(image, key, homography):
+class NoTapSource:
     """
-    在摄像头画面中高亮当前按键。
+    空的触发源。
 
-    key 是 layout 中的按键信息，坐标是纸面坐标。
-    这里需要用 homography 的逆矩阵，把纸面坐标转回图像坐标。
+    这个测试程序只测试视觉映射，
+    不测试音频敲击，也不产生输入。
+    所以 candidate 永远是 -1。
     """
-    x = key["x"]
-    y = key["y"]
-    w = key["w"]
-    h = key["h"]
 
-    paper_points = np.array(
-        [
-            [
-                [x, y],
-                [x + w, y],
-                [x + w, y + h],
-                [x, y + h]
-            ]
-        ],
-        dtype=np.float32
-    )
-
-    inverse_homography = np.linalg.inv(homography)
-    image_points = cv2.perspectiveTransform(paper_points, inverse_homography)
-    image_points = image_points.astype(int)
-
-    cv2.polylines(
-        image,
-        image_points,
-        isClosed=True,
-        color=(0, 255, 255),
-        thickness=3
-    )
-
-
-def find_key_by_id(keys, key_id):
-    """根据 key_id 找到对应的 key 信息。"""
-    for key in keys:
-        if key["id"] == key_id:
-            return key
-
-    return None
-
-
-def draw_status_text(image, paper_position, key_id):
-    """在画面上显示当前纸面坐标和按键。"""
-    if paper_position is None:
-        text = "No finger / no paper"
-    else:
-        paper_x, paper_y = paper_position
-        text = f"paper=({paper_x:.1f}, {paper_y:.1f}) key={key_id}"
-
-    cv2.putText(
-        image,
-        text,
-        (20, 40),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.8,
-        (0, 255, 0),
-        2
-    )
+    def get_candidate(self):
+        return -1
 
 
 def main():
     layout_path = "data/layouts/keyboard_number_v1.json"
 
-    mapper = PaperMapper(layout_path)
+    camera_id = 1
+
+    camera_source = CameraSource(camera_id=camera_id)
+
+    paper_mapper = PaperMapper(layout_path)
+    hand_source = MediaPipeHandSource(swap_hands=True)
+    tap_source = NoTapSource()
+
+    frame_builder = FrameBuilder(
+        paper_mapper=paper_mapper,
+        hand_source=hand_source,
+        tap_source=tap_source
+    )
+
     key_finder = KeyFinder(layout_path)
-    finger_source = MediaPipeFingerSource()
+    overlay = VisualOverlay(layout_path)
 
-    cap = cv2.VideoCapture(1)
-
-    if not cap.isOpened():
-        print("摄像头打开失败")
-        return
+    start_time = time.time()
+    frame_id = 1
 
     print("单指纸面映射测试开始")
-    print("请把打印好的纸面键盘放到摄像头下")
-    print("把食指移动到数字键上")
-    print("按 q 退出")
+    print("这个程序只测试视觉映射，不测试音频输入。")
+    print("把右手食指移动到纸面数字键上，观察按键是否高亮。")
+    print("q：退出")
+    print()
 
     while True:
-        success, image = cap.read()
+        success, image = camera_source.read_image()
 
         if not success:
             print("读取摄像头失败")
             break
 
-        homography, corners, ids = mapper.get_homography(image)
-        debug_image = mapper.draw_debug(image, corners, ids, homography)
+        t = time.time() - start_time
 
-        finger = finger_source.get_index_finger_tip(image)
+        frame, visual_data = frame_builder.build_frame(
+            image,
+            frame_id,
+            t
+        )
 
-        paper_position = None
-        current_key_id = None
+        # 这里故意不使用 tap.candidate。
+        # 因为这个测试只看右手食指当前映射到哪个 key。
+        current_key_id = get_key_id_for_finger(
+            frame,
+            finger_id=1,
+            key_finder=key_finder
+        )
 
-        if homography is not None and finger is not None:
-            image_x = finger["image_x"]
-            image_y = finger["image_y"]
-
-            paper_x, paper_y = mapper.image_to_paper(
-                image_x,
-                image_y,
-                homography
-            )
-
-            paper_position = (paper_x, paper_y)
-            current_key_id = key_finder.find_key(paper_x, paper_y)
-
-            draw_finger_point(debug_image, finger)
-
-            if current_key_id is not None:
-                current_key = find_key_by_id(key_finder.keys, current_key_id)
-                draw_current_key(debug_image, current_key, homography)
-
-        draw_status_text(debug_image, paper_position, current_key_id)
+        debug_image = overlay.draw_all(
+            image,
+            frame,
+            visual_data,
+            current_key_id,
+            text=""
+        )
 
         cv2.imshow("Single Finger Mapping Test", debug_image)
 
@@ -146,8 +92,10 @@ def main():
         if key == ord("q"):
             break
 
-    finger_source.close()
-    cap.release()
+        frame_id += 1
+
+    hand_source.close()
+    camera_source.release()
     cv2.destroyAllWindows()
 
     print("单指纸面映射测试结束")

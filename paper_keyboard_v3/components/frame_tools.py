@@ -99,6 +99,37 @@ def get_current_key_id(frame, key_finder):
 
     return key_id
 
+def get_key_id_for_finger(frame, finger_id, key_finder):
+    """
+    判断指定 finger_id 当前所在的按键。
+
+    这个函数主要用于视觉测试：
+    即使 tap.candidate == -1，
+    也可以直接查看某个手指当前落在哪个 key 上。
+
+    参数：
+        frame:
+            当前 frame。
+
+        finger_id:
+            要检查的手指编号，比如 1 表示右手食指。
+
+        key_finder:
+            KeyFinder 对象。
+
+    返回：
+        如果该手指落在某个键上，返回 key_id。
+        如果找不到该手指，或者不在任何键上，返回 None。
+    """
+    finger = find_finger_by_id(frame, finger_id)
+
+    if finger is None:
+        return None
+
+    x = finger["x"]
+    y = finger["y"]
+
+    return key_finder.find_key(x, y)
 
 def get_first_finger(frame):
     """

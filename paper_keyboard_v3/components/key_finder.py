@@ -39,7 +39,7 @@ class KeyFinder:
             y: 手指的 y 坐标
 
         返回：
-            如果坐标落在某个按键内，返回按键 label，比如 "1"
+            如果坐标落在某个按键内，返回按键 id，比如 "1"
             如果没有落在任何按键内，返回 None
         """
         for key in self.keys:
