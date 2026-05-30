@@ -1,0 +1,49 @@
+{
+  "session_id": "test_session_writer_output",
+  "layout_id": "keyboard_number_v1",
+  "unit": "mm",
+  "frames": [
+    {
+      "frame_id": 1,
+      "t": 0.0,
+      "fingers": [
+        {
+          "finger_id": 1,
+          "x": 57,
+          "y": 82
+        }
+      ],
+      "tap": {
+        "candidate": -1
+      }
+    },
+    {
+      "frame_id": 2,
+      "t": 0.03,
+      "fingers": [
+        {
+          "finger_id": 1,
+          "x": 57,
+          "y": 82
+        }
+      ],
+      "tap": {
+        "candidate": 1
+      }
+    },
+    {
+      "frame_id": 3,
+      "t": 0.06,
+      "fingers": [
+        {
+          "finger_id": 1,
+          "x": 57,
+          "y": 82
+        }
+      ],
+      "tap": {
+        "candidate": -1
+      }
+    }
+  ]
+}
