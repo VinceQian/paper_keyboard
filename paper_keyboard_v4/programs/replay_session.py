@@ -3,13 +3,11 @@ from input_sources.session_source import SessionSource
 from components.key_finder import KeyFinder
 from components.input_decider import InputDecider
 from components.text_buffer import TextBuffer
-from components.frame_tools import get_current_key_id
+from components.frame_tools import get_candidate, get_finger_position_by_id
 
 
 def main():
     session_path = "data/sessions/test_number_input_123.json"
-
-    # 如果回放其他 layout 的 session，这里也要改成对应 layout 文件
     layout_path = "data/layouts/keyboard_number_v1.json"
 
     source = SessionSource(session_path)
@@ -29,23 +27,30 @@ def main():
     for frame in frames:
         frame_id = frame["frame_id"]
 
-        current_key_id = get_current_key_id(
-            frame,
-            key_finder
-        )
+        candidate = get_candidate(frame)
+        input_finger_id = input_decider.decide_candidate(candidate)
 
-        input_key_id = input_decider.decide_key(
-            frame,
-            current_key_id
-        )
+        if input_finger_id is None:
+            continue
 
-        if input_key_id is not None:
-            text_buffer.add_key(input_key_id)
-            print(
-                f"frame {frame_id}: "
-                f"输入 {input_key_id}，"
-                f"当前文本：{text_buffer.get_text()}"
-            )
+        position = get_finger_position_by_id(frame, input_finger_id)
+
+        if position is None:
+            continue
+
+        x, y = position
+        input_key_id = key_finder.find_key(x, y)
+
+        if input_key_id is None:
+            continue
+
+        text_buffer.add_key(input_key_id)
+
+        print(
+            f"frame {frame_id}: "
+            f"finger {input_finger_id} 输入 {input_key_id}，"
+            f"当前文本：{text_buffer.get_text()}"
+        )
 
     print()
     print("最终输入结果：", text_buffer.get_text())

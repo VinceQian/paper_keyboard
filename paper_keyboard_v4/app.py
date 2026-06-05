@@ -1,5 +1,6 @@
 from programs.replay_session import main as current_program_main
-from programs.generate_session import main as current_program_main
+# from programs.generate_session import main as current_program_main
+# from programs.test_replay_data import main as current_program_main
 
 
 def main():
