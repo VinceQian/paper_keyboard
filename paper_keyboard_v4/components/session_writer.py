@@ -11,13 +11,12 @@ def build_session(session_id, layout_id, frames, unit="mm"):
     {
         "frame_id": 1,
         "t": 0.03,
-        "fingers": [
-            {
-                "finger_id": 1,
+        "fingers": {
+            "1": {
                 "x": 57,
                 "y": 82
             }
-        ],
+        },
         "tap": {
             "candidate": 1
         }
@@ -30,6 +29,11 @@ def build_session(session_id, layout_id, frames, unit="mm"):
         0-9:
             某个 finger_id 触发输入。
             当前基础版通常只会用到 1，也就是右手食指。
+
+    注意：
+        fingers 是 dict。
+        它的 key 是字符串形式的 finger_id。
+        例如 "1" 表示 finger_id = 1。
     """
     session = {
         "session_id": session_id,
@@ -61,13 +65,12 @@ def main():
         {
             "frame_id": 1,
             "t": 0.00,
-            "fingers": [
-                {
-                    "finger_id": 1,
+            "fingers": {
+                "1": {
                     "x": 57,
                     "y": 82
                 }
-            ],
+            },
             "tap": {
                 "candidate": -1
             }
@@ -75,13 +78,12 @@ def main():
         {
             "frame_id": 2,
             "t": 0.03,
-            "fingers": [
-                {
-                    "finger_id": 1,
+            "fingers": {
+                "1": {
                     "x": 57,
                     "y": 82
                 }
-            ],
+            },
             "tap": {
                 "candidate": 1
             }
@@ -89,13 +91,12 @@ def main():
         {
             "frame_id": 3,
             "t": 0.06,
-            "fingers": [
-                {
-                    "finger_id": 1,
+            "fingers": {
+                "1": {
                     "x": 57,
                     "y": 82
                 }
-            ],
+            },
             "tap": {
                 "candidate": -1
             }

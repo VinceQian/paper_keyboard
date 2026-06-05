@@ -14,13 +14,12 @@ class ManualSource:
     {
         "frame_id": 1,
         "t": 0.03,
-        "fingers": [
-            {
-                "finger_id": 1,
+        "fingers": {
+            "1": {
                 "x": 132.4,
                 "y": 78.6
             }
-        ],
+        },
         "tap": {
             "candidate": 1
         }
@@ -86,13 +85,12 @@ class ManualSource:
         frame = {
             "frame_id": frame_id,
             "t": t,
-            "fingers": [
-                {
-                    "finger_id": 1,
+            "fingers": {
+                "1": {
                     "x": position["x"],
                     "y": position["y"]
                 }
-            ],
+            },
             "tap": {
                 "candidate": candidate
             }
@@ -173,8 +171,9 @@ def main():
     for frame in frames:
         frame_id = frame["frame_id"]
         t = frame["t"]
-        finger = frame["fingers"][0]
         candidate = frame["tap"]["candidate"]
+
+        finger = frame["fingers"]["1"]
 
         x = finger["x"]
         y = finger["y"]
@@ -182,7 +181,7 @@ def main():
         print(
             f"frame {frame_id}, "
             f"t={t:.2f}, "
-            f"finger_id={finger['finger_id']}, "
+            f"finger_id=1, "
             f"finger=({x}, {y}), "
             f"candidate={candidate}"
         )
